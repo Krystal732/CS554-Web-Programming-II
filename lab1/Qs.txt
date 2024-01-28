@@ -1,2 +1,5 @@
 - check all status are correct
-- should numbers be checked as ints or can we just parse int all inputs (ex 1.3 should be error or parse int to 1)
+ex. update not your blof is 403? not signed in it 401?
+- patch with nothing in req body should throw error or do nothing?
+- check if correct user is updating in the data functions too?
+- should there be 2 collections? for users and blogs?
