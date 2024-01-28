@@ -1,33 +1,40 @@
 //import express, express router as shown in lecture code
 import {Router} from 'express';
 const router = Router();
-import {createBlog} from '../data/blogs.js'
+import {showBlogs, createBlog, getBlog, putBlog, patchBlog, postComment, deleteComment, registerUser, signinUser, checkAndTrimString} from '../data/blogs.js'
+import {ObjectId} from 'mongodb';
 
 
 router
   .route('/sitblog')
   .get(async (req, res) => {
-    //code here for GET
     try{
+      const skip = parseInt(req.query.skip) || 0
+      const limit = parseInt(req.query.limit) || 20
+
+      //limit 100
+      if (limit > 100) {
+        limit = 100
+      }
+      const blogList = await showBlogs(skip, limit);
+      res.status(200).json(blogList);
 
     }catch(e){
       res.status(500).json({error: e});
     }
-
   })
   .post(async (req, res) => {
-    //code here for POST
     let blog = req.body
     let user = undefined
-    // console.log(user)
     try{ //check req.body
       if(!blog.blogTitle || !blog.blogBody){
         throw `Missing parameters`
       }
       user = req.session.user
-      
+      if (!user){
+        return res.status(401).json({error: 'Must be logged in to create blog'});
+      }      
     }catch(e){
-      // console.log("error:",e)
       return res.status(400).json({error:e})
     }
     try{
@@ -38,7 +45,7 @@ router
         user._id
       )
       if (complete){
-
+        res.status(200).json({complete})
       }
       else{
         res.status(500).json({error: "Internal Server Error"})
@@ -52,10 +59,18 @@ router
   .route('/sitblog/:id')
   .get(async (req, res) => {
     //code here for GET
+    let blogId = undefined
+    try { //check id 
+      blogId = checkAndTrimString(req.params.id, 'blogId');
+      if (!ObjectId.isValid(blogId)) throw `invalid object ID`;
+    } catch (e) {
+      return res.status(400).json({error: e});
+    }
     try{
-
+      const blog = await getBlog(blogId)
+      return res.status(200).json({blog})
     }catch(e){
-      res.status(500).json({error: e});
+      res.status(404).json({error: e});
     }
 
   })

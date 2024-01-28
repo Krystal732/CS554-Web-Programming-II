@@ -1,0 +1,2 @@
+- check all status are correct
+- should numbers be checked as ints or can we just parse int all inputs (ex 1.3 should be error or parse int to 1)
