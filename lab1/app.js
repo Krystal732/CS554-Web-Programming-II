@@ -4,10 +4,6 @@ const app = express();
 import configRoutes from './routes/index.js';
 import cookieParser from 'cookie-parser';
 
-import { getBlog, checkAndTrimString} from './data/blogs.js';
-import {ObjectId} from 'mongodb';
-
-
 import session from 'express-session'
 app.use(session({
     name: 'AuthState',
@@ -26,6 +22,8 @@ app.use('/sitblog/:id/comments', async (req, res, next) => {
         if(!req.session.user){
             return res.status(401).json({error: 'Must be logged in to write a comment'});
         }
+    }else{
+        return res.status(404).json({error: 'req method must be post for this route'})
     }
     next()
 })
@@ -34,34 +32,55 @@ app.use('/sitblog/:blogId/:commentId', async (req, res, next) => {
         if(!req.session.user){
             return res.status(401).json({error: 'Must be logged in to delete comment'});
         }
-        // let blogId = req.params.id
-        // let commentId = req.params.commentId
+    }else{
+        return res.status(404).json({error: 'req method must be delete for this path'})
+    }
+    next()
+})
+app.use('/sitblog/register', async (req, res, next) => {
+    if(req.method !== 'POST'){
+        return res.status(404).json({error: 'req method must be post for this route'})
+    }
+    next()
+})
 
-        // commentId = checkAndTrimString(commentId)
-        // if (!ObjectId.isValid(commentId)) throw `commentId is invalid object ID`;
+app.use('/sitblog/signin', async (req, res, next) => {
+    if(req.method !== 'POST'){
+        return res.status(404).json({error: 'req method must be post for this route'})
+    }
+    next()
+})
 
-        // blogId = checkAndTrimString(req.params.id, 'blogId');
-        // if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
+app.use('/sitblog/logout', async (req, res, next) => {
+    if(req.method !== 'GET'){
+        return res.status(404).json({error: 'req method must be GET for this route'})
+    }
+    next()
+})
 
-        // let blog = await getBlog(blogId)
-        // let matchingComment = blog.comments.find(comment => comment._id === commentId);
-        // if(!matchingComment){
-        //     throw `Comment does not exist`
-        // }
-        // if(matchingComment.userThatPostedComment._id !== new ObjectId(user._id) || matchingComment.userThatPostedComment.username !== user.username){
-        //     return res.status(403).json({error: 'Must be logged in the correct account to delete comment'})
-        // }
+app.use('/sitblog/:id', async (req, res, next) => {
+    if(req.originalUrl !== '/sitblog/logout' && req.originalUrl !== '/sitblog/signin' && req.originalUrl !== '/sitblog/register'){ //trigger ony if not register, login, or logout
+
+        if(req.method === 'GET' || req.method === 'PUT' || req.method === 'PATCH'){
+            if(!req.session.user){
+                return res.status(401).json({error: 'Must be logged in to get or edit blog'});
+            }    
+        }else{
+            return res.status(404).json({error: 'req method must be get, put, or patch for this path'})
+        }
     }
     next()
 })
 
 app.use('/sitblog', async (req, res, next) => {
-    if(req.url === '/sitblog'){ //trigger ony if /sitblog is the endpoint (not subpath)
-        if(req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH'){
+    if(req.originalUrl === '/sitblog'){ //trigger ony if /sitblog is the endpoint (not subpath)
+        if(req.method === 'POST'){
             if(!req.session.user){
-                return res.status(401).json({error: 'Must be logged in to create or edit blog'});
+                return res.status(401).json({error: 'Must be logged in to create blog'});
             }
         
+        }else{
+            return res.status(404).json({error: 'req method must be get or post for this path'})
         }
     }
     next()

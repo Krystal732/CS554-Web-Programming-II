@@ -36,7 +36,7 @@ export const showBlogs = async(skip = 0, limit = 20) =>{
 
 export const getBlog = async (blogId) =>{
   let id = checkAndTrimString(blogId, "blog")
-  if (!ObjectId.isValid(id)) throw `invalid object ID`;
+  if (!ObjectId.isValid(id)) throw `blogid is invalid object ID`;
   const blogsCollection = await blogs()
   const blog = await blogsCollection.findOne({_id: new ObjectId(id)})
   if (blog === null) throw `No blog with that id`;
@@ -77,7 +77,7 @@ export const putBlog = async (newBlogTitle, newBlogBody, blogId) =>{
   newBlogTitle = checkAndTrimString(newBlogTitle)
   newBlogBody = checkAndTrimString(newBlogBody)
   blogId = checkAndTrimString(req.params.id, 'blogId');
-  if (!ObjectId.isValid(blogId)) throw `invalid object ID`;
+  if (!ObjectId.isValid(blogId)) throw `blogid is invalid object ID`;
 
   const newBlog = {
     blogTitle: newBlogTitle,
@@ -101,7 +101,7 @@ export const putBlog = async (newBlogTitle, newBlogBody, blogId) =>{
 
 export const patchBlog = async(newBlogTitle, newBlogBody, blogId) =>{
   blogId = checkAndTrimString(req.params.id, 'blogId');
-  if (!ObjectId.isValid(blogId)) throw `invalid object ID`;
+  if (!ObjectId.isValid(blogId)) throw `blogid is invalid object ID`;
 
   const newBlog = {}
   if (newBlogTitle !== undefined) {
@@ -194,6 +194,9 @@ export const registerUser = async (
   name = checkAndTrimString(name, "name")
   username = checkAndTrimString(username, "username")
   password = checkAndTrimString(password, "password")
+  if (password.length < 6){
+    throw `Password must be at least 6 characters`
+  }
 
   let saltRounds = 16
   const hash = await bcrypt.hash(password, saltRounds);
@@ -223,16 +226,19 @@ export const registerUser = async (
 export const signinUser = async (username, password) => {
   username = checkAndTrimString(username)
   password = checkAndTrimString(password)
+  if (password.length < 6){
+    throw `Password must be at least 6 characters`
+  }
   //find username
   const userCollection = await users()
   const user = await userCollection.findOne({username: username});
   if(user === null){
-    throw `Either the email address or password is invalid`
+    throw `Either the user or password is invalid`
   }
 
   //check hashed passowrd
   if(!(await bcrypt.compare(password, user.password))){
-    throw `Either the email address or password is invalid`
+    throw `Either the username or password is invalid`
   }
 
   const userSansPassword = {

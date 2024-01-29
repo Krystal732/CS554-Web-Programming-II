@@ -1,16 +1,4 @@
 - check all status are correct
+- if user already signs in and trys to sign in again, throw error or expire cookie and start new session?
 
-- patch with nothing in req body should throw error or do nothing?
-ERROR 
-
-
-- ok to have no constraint on inputs? like no length restriction for title, body, password etc
-	-some constraint, check slack
-
-
-!!!
-- check if correct user is updating in the data functions too? and middleware? - eiher or
-
-- there is no such thing as /sitblog PUT and PATCH, 
-on the spec sheet, did you mean /sitblog/:id
-	-yes should be sep middleware to check that 
+- can we have more middleware than the ones specified on spec sheet
