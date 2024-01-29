@@ -1,5 +1,16 @@
 - check all status are correct
-ex. update not your blof is 403? not signed in it 401?
+
 - patch with nothing in req body should throw error or do nothing?
-- check if correct user is updating in the data functions too?
-- should there be 2 collections? for users and blogs?
+ERROR 
+
+
+- ok to have no constraint on inputs? like no length restriction for title, body, password etc
+	-some constraint, check slack
+
+
+!!!
+- check if correct user is updating in the data functions too? and middleware? - eiher or
+
+- there is no such thing as /sitblog PUT and PATCH, 
+on the spec sheet, did you mean /sitblog/:id
+	-yes should be sep middleware to check that 

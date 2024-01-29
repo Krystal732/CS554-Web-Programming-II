@@ -115,7 +115,7 @@ router
         return res.status(401).json({error: 'Must be logged in to update a blog'});
       }
       let blog = await getBlog(blogId)
-      if (user._id !== blog.userThatPosted._id || user.username !== blog.userThatPosted.username){
+      if (new ObjectId(user._id) !== blog.userThatPosted._id || user.username !== blog.userThatPosted.username){
         return res.status(403).json({error: 'Must be logged in the correct account to update'})
       }
     }catch(e){
@@ -160,14 +160,14 @@ router
         return res.status(401).json({error: 'Must be logged in to update a blog'});
       }
       let blog = await getBlog(blogId)
-      if (user._id !== blog.userThatPosted._id || user.username !== blog.userThatPosted.username){
+      if (new ObjectId(user._id) !== blog.userThatPosted._id || user.username !== blog.userThatPosted.username){
         return res.status(403).json({error: 'Must be logged in the correct account to update'})
       }
     }catch(e){
       return res.status(400).json({error:e})
     }
     try{
-      let complete = await putBlog(
+      let complete = await patchBlog(
         updates.blogTitle,
         updates.blogBody,
         blogId
@@ -194,7 +194,7 @@ router.route('/sitblog/:id/comments').post(async (req, res) => {
     comment = checkAndTrimString(comment)
 
     blogId = checkAndTrimString(req.params.id, 'blogId');
-    if (!ObjectId.isValid(blogId)) throw `invalid object ID`;
+    if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
 
     user = req.session.user
     if (!user){
@@ -228,7 +228,6 @@ router.route('/sitblog/:blogId/:commentId').delete(async (req, res) => {
     commentId = checkAndTrimString(commentId)
     if (!ObjectId.isValid(commentId)) throw `commentId is invalid object ID`;
 
-
     blogId = checkAndTrimString(req.params.id, 'blogId');
     if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
 
@@ -242,7 +241,7 @@ router.route('/sitblog/:blogId/:commentId').delete(async (req, res) => {
     if(!matchingComment){
       throw `Comment does not exist`
     }
-    if(matchingComment.userThatPostedComment._id !== user._id || matchingComment.userThatPostedComment.username !== user.username){
+    if(matchingComment.userThatPostedComment._id !== new ObjectId(user._id) || matchingComment.userThatPostedComment.username !== user.username){
       return res.status(403).json({error: 'Must be logged in the correct account to delete comment'})
     }
 

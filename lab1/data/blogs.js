@@ -138,13 +138,12 @@ export const postComment = async(blogId,
   comment = checkAndTrimString(comment)
   username = checkAndTrimString(username)
 
-  if (!(userID instanceof ObjectId)) {
-    throw `userID must be ObjectId`;
-  }
+  userID = checkAndTrimString(userID)
+  if (!ObjectId.isValid(userID)) throw `userId is invalid object ID`;
 
   const newComment = {
     _id: new ObjectId(),
-    userThatPostedComment: {_id:userID, username: string},
+    userThatPostedComment: {_id: new ObjectId(userID), username: string},
     comment: comment
   }
 
