@@ -3,17 +3,19 @@ import {Router} from 'express';
 const router = Router();
 import {showBlogs, createBlog, getBlog, putBlog, patchBlog, postComment, deleteComment, registerUser, signinUser, checkAndTrimString} from '../data/blogs.js'
 import {ObjectId} from 'mongodb';
+import {users} from '../config/mongoCollections.js'
+
 
 
 router.route('/sitblog/:id/comments').post(async (req, res) => {
-  let comment = req.body
+  let comment = req.body.comment
   let user = undefined
   let blogId = req.params.id
 
   try{
     comment = checkAndTrimString(comment)
 
-    blogId = checkAndTrimString(req.params.id, 'blogId');
+    blogId = checkAndTrimString(blogId, 'blogId');
     if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
 
     user = req.session.user
@@ -45,23 +47,23 @@ router.route('/sitblog/:blogId/:commentId').delete(async (req, res) => {
   let commentId = req.params.commentId
 
   try{
-    commentId = checkAndTrimString(commentId)
+    commentId = checkAndTrimString(commentId, 'commentId')
     if (!ObjectId.isValid(commentId)) throw `commentId is invalid object ID`;
 
-    blogId = checkAndTrimString(req.params.id, 'blogId');
+    blogId = checkAndTrimString(blogId, 'blogId');
     if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
 
     user = req.session.user
     if (!user){
-      return res.status(401).json({error: 'Must be logged in to comment on blog'});
+      return res.status(401).json({error: 'Must be logged in to delete comment on blog'});
     }
     
     let blog = await getBlog(blogId)
-    let matchingComment = blog.comments.find(comment => comment._id === commentId);
+    let matchingComment = blog.comments.find(comment => comment._id.toString() === commentId);
     if(!matchingComment){
       throw `Comment does not exist`
     }
-    if(matchingComment.userThatPostedComment._id !== new ObjectId(user._id) || matchingComment.userThatPostedComment.username !== user.username){
+    if(matchingComment.userThatPostedComment._id.toString() !== user._id || matchingComment.userThatPostedComment.username !== user.username){
       return res.status(403).json({error: 'Must be logged in the correct account to delete comment'})
     }
 
@@ -89,6 +91,11 @@ router.route('/sitblog/register').post(async (req, res) => {
     user.password = checkAndTrimString(user.password, "password")
     if (user.password.length < 6){
       throw `Password must be at least 6 characters`
+    }
+    const userCollection = await users()
+    const matchingUser = await userCollection.findOne({ username: user.username });
+    if(matchingUser){
+      throw `User already exists`
     }
     let complete = await registerUser(
       user.name,  
@@ -132,8 +139,8 @@ router.route('/sitblog/signin').post(async (req, res) => {
 
 router.route('/sitblog/logout').get(async (req, res) => {
   try{
-    res.clearCookie('AuthState');
-    // req.session('destroy')
+    req.session.destroy();
+    return res.status(200).json("Logged out")
   }catch(e){
     res.status(500).json({error:e})
   }
@@ -165,7 +172,7 @@ router
     try{ 
       //check req.body
       if(!updates.blogTitle || !updates.blogBody){
-        throw `Missing parameters`
+        throw `Must provide an update to blog`
       }
       updates.blogTitle = checkAndTrimString(updates.blogTitle, "updated blog title")
       updates.blogBody = checkAndTrimString(updates.blogBody, "updated blog body")
@@ -179,7 +186,7 @@ router
         return res.status(401).json({error: 'Must be logged in to update a blog'});
       }
       let blog = await getBlog(blogId)
-      if (new ObjectId(user._id) !== blog.userThatPosted._id || user.username !== blog.userThatPosted.username){
+      if (user._id !== blog.userThatPosted._id.toString() || user.username !== blog.userThatPosted.username){
         return res.status(403).json({error: 'Must be logged in the correct account to update'})
       }
     }catch(e){
@@ -214,7 +221,7 @@ router
       if(updates.blogBody){
         updates.blogBody = checkAndTrimString(updates.blogBody, "updated blog body")
       }
-      if(updates.blogBody || updates.blogTitle){
+      if(!updates.blogBody && !updates.blogTitle){
         throw `Must update either blogBody or blogTitle`
       }
       //check id
@@ -227,7 +234,7 @@ router
         return res.status(401).json({error: 'Must be logged in to update a blog'});
       }
       let blog = await getBlog(blogId)
-      if (new ObjectId(user._id) !== blog.userThatPosted._id || user.username !== blog.userThatPosted.username){
+      if (user._id !== blog.userThatPosted._id.toString() || user.username !== blog.userThatPosted.username){
         return res.status(403).json({error: 'Must be logged in the correct account to update'})
       }
     }catch(e){

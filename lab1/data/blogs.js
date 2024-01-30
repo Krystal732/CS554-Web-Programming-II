@@ -28,6 +28,9 @@ export const showBlogs = async(skip = 0, limit = 20) =>{
   if (limit > 100){ //limit 100
     limit = 100
   }
+  if (limit === 0){ //limit 0 weird
+    return []
+  }
   
   const blogsCollection = await blogs()
   const blogList = await blogsCollection.find().skip(skip).limit(limit).toArray();
@@ -76,7 +79,7 @@ export const createBlog = async (
 export const putBlog = async (newBlogTitle, newBlogBody, blogId) =>{
   newBlogTitle = checkAndTrimString(newBlogTitle)
   newBlogBody = checkAndTrimString(newBlogBody)
-  blogId = checkAndTrimString(req.params.id, 'blogId');
+  blogId = checkAndTrimString(blogId, 'blogId');
   if (!ObjectId.isValid(blogId)) throw `blogid is invalid object ID`;
 
   const newBlog = {
@@ -100,7 +103,7 @@ export const putBlog = async (newBlogTitle, newBlogBody, blogId) =>{
 };
 
 export const patchBlog = async(newBlogTitle, newBlogBody, blogId) =>{
-  blogId = checkAndTrimString(req.params.id, 'blogId');
+  blogId = checkAndTrimString(blogId, 'blogId');
   if (!ObjectId.isValid(blogId)) throw `blogid is invalid object ID`;
 
   const newBlog = {}
@@ -132,48 +135,49 @@ export const postComment = async(blogId,
   comment, 
   userID, 
   username) =>{
-  blogId = checkAndTrimString(req.params.id, 'blogId');
-  if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
+   
+    blogId = checkAndTrimString(blogId, 'blogId');
+    if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
 
-  comment = checkAndTrimString(comment)
-  username = checkAndTrimString(username)
+    comment = checkAndTrimString(comment)
+    username = checkAndTrimString(username)
 
-  userID = checkAndTrimString(userID)
-  if (!ObjectId.isValid(userID)) throw `userId is invalid object ID`;
+    userID = checkAndTrimString(userID)
+    if (!ObjectId.isValid(userID)) throw `userId is invalid object ID`;
+    
+    const newComment = {
+      _id: new ObjectId(),
+      userThatPostedComment: {_id: new ObjectId(userID), username: username},
+      comment: comment
+    }
 
-  const newComment = {
-    _id: new ObjectId(),
-    userThatPostedComment: {_id: new ObjectId(userID), username: string},
-    comment: comment
-  }
-
-  const blogsCollection = await blogs()
-  const updatedInfo = await blogsCollection.findOneAndUpdate(
-    {_id: new ObjectId(blogId)},
-    {$push: {comments: newComment}},
-    {returnDocument: 'after'}
-  );
-  
-  if (!updatedInfo) {
-    throw `could not update blog successfully`;
-  }
-  updatedInfo._id = updatedInfo._id.toString();
-  return updatedInfo;
-  
+    const blogsCollection = await blogs()
+    const updatedInfo = await blogsCollection.findOneAndUpdate(
+      {_id: new ObjectId(blogId)},
+      {$push: {comments: newComment}},
+      {returnDocument: 'after'}
+    );
+    
+    if (!updatedInfo) {
+      throw `could not update blog successfully`;
+    }
+    updatedInfo._id = updatedInfo._id.toString();
+    return updatedInfo;
+    
 };
 
 export const deleteComment = async(blogId, commentId) => {
-  blogId = checkAndTrimString(req.params.id, 'blogId');
+  blogId = checkAndTrimString(blogId, 'blogId');
   if (!ObjectId.isValid(blogId)) throw `blogId is invalid object ID`;
 
-  commentId = checkAndTrimString(req.params.id, 'commentId');
+  commentId = checkAndTrimString(commentId, 'commentId');
   if (!ObjectId.isValid(commentId)) throw `commentId is invalid object ID`;
 
   const blogsCollection = await blogs()
 
   const updatedInfo = await blogsCollection.findOneAndUpdate(
     { _id: new ObjectId(blogId) },
-    { $pull: { comments: { _id: commentId } } },
+    { $pull: { comments: { _id: new ObjectId(commentId) } } },
     { returnDocument: 'after' }
   );
 
