@@ -2,7 +2,6 @@
 
 - can we have more middleware than the ones specified on spec sheet
 
-
-- return user document for register and signin, does the name of the object matter? req.session.user
+- anyting case sensitive?
 
 -will the comment be supplied in the body with key of "comment"? bc blog specified blogTitle/body but none here

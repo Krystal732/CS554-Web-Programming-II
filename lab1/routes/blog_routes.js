@@ -30,7 +30,7 @@ router.route('/sitblog/:id/comments').post(async (req, res) => {
       user.username
     )
     if (complete){
-      res.status(200).json({complete})
+      res.status(200).json(complete)
     }
     else{
       res.status(500).json({error: "Internal Server Error"})
@@ -72,7 +72,7 @@ router.route('/sitblog/:blogId/:commentId').delete(async (req, res) => {
       commentId
     )
     if (complete){
-      res.status(200).json({complete})
+      res.status(200).json(complete)
     }
     else{
       res.status(500).json({error: "Internal Server Error"})
@@ -103,7 +103,7 @@ router.route('/sitblog/register').post(async (req, res) => {
       user.password
     )
     if (complete){
-      res.status(200).json({complete})
+      res.status(200).json(complete)
     }
     else{
       res.status(500).json({error: "Internal Server Error"})
@@ -127,7 +127,7 @@ router.route('/sitblog/signin').post(async (req, res) => {
     )
     if (complete){
       req.session.user = complete
-      res.status(200).json({complete})
+      res.status(200).json(complete)
     }
     else{
       res.status(500).json({error: "Internal Server Error"})
@@ -199,7 +199,7 @@ router
         blogId
       )
       if (complete){
-        res.status(200).json({complete})
+        res.status(200).json(complete)
       }
       else{
         res.status(500).json({error: "Internal Server Error"})
@@ -247,7 +247,7 @@ router
         blogId
       )
       if (complete){
-        res.status(200).json({complete})
+        res.status(200).json(complete)
       }
       else{
         res.status(500).json({error: "Internal Server Error"})
@@ -317,7 +317,7 @@ router
         user._id
       )
       if (complete){
-        res.status(200).json({complete})
+        res.status(200).json(complete)
       }
       else{
         res.status(500).json({error: "Internal Server Error"})
@@ -326,7 +326,5 @@ router
       res.status(400).json({error:e})
     }
   });
-
-
 
 export default router;

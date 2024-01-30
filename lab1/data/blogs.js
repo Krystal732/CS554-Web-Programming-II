@@ -212,6 +212,10 @@ export const registerUser = async (
   }
   
   const userCollection = await users()
+  const matchingUser = await userCollection.findOne({ username: username });
+    if(matchingUser){
+      throw `User already exists`
+    }
   const insertInfo = await userCollection.insertOne(newUser);
 	if (!insertInfo.acknowledged || !insertInfo.insertedId){
     throw 'Could not add user';
