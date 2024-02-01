@@ -5,3 +5,10 @@
 - anyting case sensitive?
 
 -will the comment be supplied in the body with key of "comment"? bc blog specified blogTitle/body but none here
+
+
+username case insensitive
+
+
+
+
