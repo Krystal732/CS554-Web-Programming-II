@@ -1,11 +1,11 @@
-const tvmazeRoutes = require('./tvmaze');
+import spaceXRoutes from './spaceX.js';
 
 const constructorMethod = (app) => {
-  app.use('/shows', tvmazeRoutes);
+  app.use('/api', spaceXRoutes);
 
   app.use('*', (req, res) => {
-    res.json({error: 'Route no valid'});
+    res.status(404).json({error: 'Route not valid'});
   });
 };
 
-module.exports = constructorMethod;
+export default constructorMethod;

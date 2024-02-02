@@ -1,31 +1,32 @@
-const express = require('express');
+import express from 'express';
 const app = express();
-const static = express.static(__dirname + '/public');
-const configRoutes = require('./routes');
-const exphbs = require('express-handlebars');
-const redis = require('redis');
+import configRoutes from './routes/index.js';
+import redis from 'redis'
 const client = redis.createClient();
 client.connect().then(() => {});
 
-const handlebarsInstance = exphbs.create({
-  defaultLayout: 'main'
-  // Specify helpers which are only registered on this instance.
-});
+function checkAndTrimString(s, varName) {
+  if (typeof s !== "string") {
+    throw `${varName || 'provided variable'} is not a string`;
+  }
+  s = s.trim()
+  if(s.length === 0){
+      throw `String must not be empty`
+  }
+  return s
+}
 
-app.use('/public', static);
+
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-app.use('/shows', async (req, res, next) => {
-  if (req.originalUrl === '/shows') {
-    let exists = await client.exists('showListHomepage');
+app.use('/api/rockets', async (req, res, next) => {
+  if (req.originalUrl === '/api/rockets') {
+    let exists = await client.exists('rocketsList');
     if (exists) {
-      //if we do have it in cache, send the raw html from cache
-      console.log('Show List from cache');
-      let showsHomePage = await client.get('showListHomepage');
-      console.log('Sending HTML from Redis....');
-      res.send(showsHomePage);
-      return;
+      console.log('Rockets List from cache');
+      let rocketsList = await client.get('rocketsList');
+      return res.status(200).json(rocketsList)
     } else {
       next();
     }
@@ -34,19 +35,35 @@ app.use('/shows', async (req, res, next) => {
   }
 });
 
-app.use('/shows/:id', async (req, res, next) => {
-  //lets check to see if we have the show detail page for this show in cache
-  if (
-    req.originalUrl !== '/shows/search' &&
-    req.originalUrl !== '/shows/popularsearches'
-  ) {
+app.use('/api/rockets/:id', async (req, res, next) => {
+  try{
+    req.params.id = checkAndTrimString(req.params.id, "rocketID")
+  }catch(e){
+    return res.status(400).json({error:e})
+  }
+  if(req.originalUrl !== '/api/rockets/history'){
     let exists = await client.exists(req.params.id);
     if (exists) {
-      //if we do have it in cache, send the raw html from cache
-      console.log('Show in Cache');
-      let showDetailPage = await client.get(req.params.id);
-      console.log('Sending HTML from Redis....');
-      res.send(showDetailPage);
+      console.log('Show rocket in Cache');
+      let rocket = await client.get(req.params.id); 
+      //push to history
+      await client.lPush('history', rocket)
+      res.status(200).json(rocket)
+    } else {
+      next();
+    }
+  }else{
+    next()
+  }
+});
+
+app.use('/api/launches', async (req, res, next) => {
+  if (req.originalUrl === '/api/launches') {
+    let exists = await client.exists('launchesList');
+    if (exists) {
+      console.log('Launches List from cache');
+      let launchesList = await client.get('launchesList');
+      return res.status(200).json(launchesList)
     } else {
       next();
     }
@@ -55,8 +72,53 @@ app.use('/shows/:id', async (req, res, next) => {
   }
 });
 
-app.engine('handlebars', exphbs.engine({defaultLayout: 'main'}));
-app.set('view engine', 'handlebars');
+app.use('/api/launches/:id', async (req, res, next) => {
+  try{
+    req.params.id = checkAndTrimString(req.params.id, "launchID")
+  }catch(e){
+    return res.status(400).json({error:e})
+  }
+  let exists = await client.exists(req.params.id);
+  if (exists) {
+    console.log('Show launch in Cache');
+    let launch = await client.get(req.params.id); 
+    res.status(200).json(launch)
+  } else {
+    next();
+  }
+});
+
+app.use('/api/capsules', async (req, res, next) => {
+  if (req.originalUrl === '/api/capsules') {
+    let exists = await client.exists('capsulesList');
+    if (exists) {
+      console.log('Capsules List from cache');
+      let capsulesList = await client.get('capsulesList');
+      return res.status(200).json(capsulesList)
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
+});
+
+app.use('/api/capsules/:id', async (req, res, next) => {
+  try{
+    req.params.id = checkAndTrimString(req.params.id, "capsuleID")
+  }catch(e){
+    return res.status(400).json({error:e})
+  }
+  let exists = await client.exists(req.params.id);
+  if (exists) {
+    console.log('Show capusle in Cache');
+    let capsule = await client.get(req.params.id); 
+    res.status(200).json(capsule)
+  } else {
+    next();
+  }
+});
+
 
 configRoutes(app);
 app.listen(3000, async () => {
