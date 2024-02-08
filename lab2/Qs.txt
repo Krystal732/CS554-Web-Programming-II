@@ -1,3 +1,0 @@
-- does it matter if we do import vs require, lecture code used require but past labs we did import with type:module
-
-- does it matter if we leave console logs of "is/is not cached" like in lecture code

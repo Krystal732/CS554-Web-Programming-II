@@ -39,7 +39,7 @@ router.get('/rockets/:id', async (req, res) => {
     await client.lPush('history', jsonData)
     return res.status(200).json(jsonData)
   }catch(e){
-    return res.status(e.response.status).json({error:e})
+    return res.status(400).json({error:"invalid rocket ID"})
   }
 });
 
@@ -74,7 +74,7 @@ router.get('/launches/:id', async (req, res) => {
     return res.status(200).json(jsonData)
 
   }catch(e){
-    return res.status(e.response.status).json({error:e})
+    return res.status(400).json({error:"invalid launch ID"})
   }
 });
 
@@ -107,7 +107,7 @@ router.get('/capsules/:id', async (req, res) => {
     await client.set(req.params.id, jsonData) //add to cache
     return res.status(200).json(jsonData)
   }catch(e){
-    return res.status(e.response.status).json({error:e})
+    return res.status(400).json({error:"invalid capsule ID"})
   }
 });
 
