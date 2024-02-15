@@ -1,0 +1,20 @@
+{
+  "name": "lab3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node ./tasks/seed.js"
+  },
+  "author": "Krystal Hong 10464295",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^4.9.3",
+    "graphql": "^16.8.1",
+    "mongodb": "^6.1.0",
+    "uuid": "^9.0.1",
+    "redis": "^4.3.1"    
+  }
+}
