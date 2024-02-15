@@ -22,7 +22,30 @@ import {v4 as uuid} from 'uuid'; //for generating _id's
     addEmployee(firstName: String!, lastName: String!, employerId: Int!): Employee
 		
 */
+function checkAndTrimString(s, varName) {
+  if (typeof s !== "string") {
+    throw new GraphQLError (varName + " is not a string")
+  }
+  s = s.trim()
+  if(s.length === 0){
+      throw new GraphQLError ('String must not be empty')
+  }
+  return s
+}
 
+function checkIsNumber(val, varName) {
+  if (typeof val !== "number") {
+    throw new GraphQLError (varName + " is not a number")
+  }
+
+  if (isNaN(val)) {
+    throw new GraphQLError (varName + " is not a number")
+  }
+
+  if(val === Infinity || val === -Infinity){
+    throw new GraphQLError (varName + " is not a finite number")
+  }
+}
 export const resolvers = {
   Query: {
     artists: async () => { //array of all artists
@@ -141,14 +164,75 @@ export const resolvers = {
       return company;
 
     },
-    getSongsByArtistId: async (_, args) => { //get all albums from artist id then return list of all songs
+    getSongsByArtistId: async (_, args) => { //get all albums by artist id then return list of all songs
+      let exists = await client.exists(args.artistId+"songs")
+      let songs = []
+      if (exists){
+        songs = await client.get(args.artistId+"songs")
+      }else{
+        const albums = await albumsCollection()
+        let artistsAlbums = albums.find({ artistId: args.artistId })
+        if (!artistsAlbums) {
+          //can't find the albums by artist
+          throw new GraphQLError('Artist does not have albums', {
+            extensions: {code: 'NOT_FOUND'}
+          });
+        }
+        artistsAlbums.forEach(album => {songs = songs.concat(album.songs)})
+        await client.set(args.artistId+"songs", songs) //save to cache
+        await client.expire(args.artistId+"songs", 3600) //expire in 1 hour
 
+      }
+      return songs
     },
-    albumsByGenre: async (_, args) => {
-
+    albumsByGenre: async (_, args) => {//check albums and get ones w mathcing genre
+      args.genre = checkAndTrimString(args.genre, "genre")
+      args.genre = args.genre.toUpperCase()
+      let exists = await client.exists(args.genre)
+      let albumsList = []
+      if (exists){
+        albumsList = await client.get(args.genre)
+      }else{
+        const albums = await albumsCollection()
+        albumsList = albums.find({genre: args.genre})
+        if (!artistsAlbums) {
+          //can't find the albums with genre
+          throw new GraphQLError('No albums found with that genre', {
+            extensions: {code: 'NOT_FOUND'}
+          });
+        }
+        await client.set(args.genre, albumsList) //save to cache
+        await client.expire(args.genre, 3600) //expire in 1 hour
+      }
+      return albumsList
     },
     companyByFoundedYear: async (_, args) => {
+      args.min = checkIsNumber(args.min, "min year")
+      if(!Number.isInteger(args.min) || args.min <1900){
+        throw new GraphQLError('Min Year must be int greater or equal to 1900')
+      }
 
+      args.max = checkIsNumber(args.max, "max year")
+      if(!Number.isInteger(args.max) || args.max <args.min || args.max > 2024){
+        throw new GraphQLError('Max year must be int greater than min year and less than 2025')
+      }
+      let exists = await client.exists("min"+args.min.toString()+"max"+args.max.toString())
+      let companiesList = []
+      if (exists){
+        companiesList = await client.get("min"+args.min.toString()+"max"+args.max.toString())
+      }else{
+        const companies = await companiesCollection()
+        companiesList = companies.find({foundedYear: {$gte: args.min, $lte: args.max}})
+        if (!companiesList) {
+          //can't find the companies between those years
+          throw new GraphQLError('No comapnies found with that year range', {
+            extensions: {code: 'NOT_FOUND'}
+          });
+        }
+        await client.set("min"+args.min.toString()+"max"+args.max.toString(), companiesList)
+        await client.expire("min"+args.min.toString()+"max"+args.max.toString(), 3600)
+      }
+      return companiesList
     },
     searchArtistByArtistName: async (_, args) => {
 
