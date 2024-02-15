@@ -54,6 +54,7 @@ export const typeDefs = `#graphql
     INDIE
     ALTERNATIVE
   }
+  scalar Date
 
   type Mutation {
     addArtist(name: String!, date_formed: Date!, members: [String!]!) : Artist
