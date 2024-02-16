@@ -265,7 +265,24 @@ export const resolvers = {
       const albumsList = await albums.find({
         artistId: parentValue._id
       }).toArray();
+      if (!albumsList) {
+        //can't find albums by the artist
+        throw new GraphQLError('No albums found for that artist', {
+          extensions: {code: 'NOT_FOUND'}
+        });
+      }
       return albumsList;
+    },
+    numOfAlbums: async(parentValue) => {
+      const artists = await artistsCollection()
+      let artist = await artists.findOne({_id: parentValue._id})
+      if (!artist) {
+        //can't find the artist from the id
+        throw new GraphQLError('No artist with that Id', {
+          extensions: {code: 'NOT_FOUND'}
+        });
+      }
+      return artist.albums.length
     }
   },
   Album: {
@@ -287,6 +304,17 @@ export const resolvers = {
         companyId: parentValue._id
       }).toArray();
       return albumsList;
+    },
+    numOfAlbums: async(parentValue) => {
+      const companies = await companiesCollection()
+      let company = await companies.findOne({_id: parentValue._id})
+      if (!company) {
+        //can't find the company from the id
+        throw new GraphQLError('No company with that Id', {
+          extensions: {code: 'NOT_FOUND'}
+        });
+      }
+      return company.albums.length
     }
   },
   Mutation: {
