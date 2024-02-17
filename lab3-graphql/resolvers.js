@@ -26,28 +26,67 @@ import {v4 as uuid} from 'uuid'; //for generating _id's
 */
 function checkAndTrimString(s, varName) {
   if (typeof s !== "string") {
-    throw new GraphQLError (`${varName} is not a string`)
+    throw new GraphQLError (`${varName} is not a string`, {
+      extensions: {code: 'BAD_USER_INPUT'}
+    })
   }
   s = s.trim()
   if(s.length === 0){
-      throw new GraphQLError (`String must not be empty`)
+      throw new GraphQLError (`String must not be empty`, {
+        extensions: {code: 'BAD_USER_INPUT'}
+      })
   }
   return s
 }
 
 function checkIsNumber(val, varName) {
   if (typeof val !== "number") {
-    throw new GraphQLError (`${varName } is not a number`)
+    throw new GraphQLError (`${varName } is not a number`, {
+      extensions: {code: 'BAD_USER_INPUT'}
+    })
   }
 
   if (isNaN(val)) {
-    throw new GraphQLError (`${varName }  is not a number`)
+    throw new GraphQLError (`${varName }  is not a number`, {
+      extensions: {code: 'BAD_USER_INPUT'}
+    })
   }
 
   if(val === Infinity || val === -Infinity){
-    throw new GraphQLError (`${varName} is not a finite number`)
+    throw new GraphQLError (`${varName} is not a finite number`, {
+      extensions: {code: 'BAD_USER_INPUT'}
+    })
   }
 }
+
+function isValidDate(dateString)
+{
+  // Source:
+  //https://stackoverflow.com/questions/6177975/how-to-validate-date-with-format-mm-dd-yyyy-in-javascript
+    // First check for the pattern
+    if(!/^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/\d{4}$/.test(dateString))
+        return false;
+
+    // Parse the date parts to integers
+    var parts = dateString.split("/");
+    var day = parseInt(parts[1], 10);
+    var month = parseInt(parts[0], 10);
+    var year = parseInt(parts[2], 10);
+
+    // Check the ranges of month and year
+    if(year < 1000 || year > 3000 || month == 0 || month > 12)
+        return false;
+
+    var monthLength = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+
+    // Adjust for leap years
+    if(year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
+        monthLength[1] = 29;
+
+    // Check the range of the day
+    return day > 0 && day <= monthLength[month - 1];
+};
+
 export const resolvers = {
   Query: {
     artists: async () => { //array of all artists
@@ -88,7 +127,7 @@ export const resolvers = {
       }
       return allAlbums
     },
-    recordcompanies: async() => {
+    recordCompanies: async() => {
       let exists = await client.exists('allCompanies'); 
       let allCompanies = undefined
       if (exists){
@@ -110,7 +149,9 @@ export const resolvers = {
     getArtistById: async (_, args) => {
       args._id = checkAndTrimString(args._id, "artistID")
       if (!ObjectId.isValid(args._id)){
-        throw new GraphQLError(`artist ID is invalid object ID`)
+        throw new GraphQLError(`artist ID is invalid object ID`), {
+          extensions: {code: 'BAD_USER_INPUT'}
+        }
       } 
 
       let exists = await client.exists(args._id); 
@@ -119,7 +160,7 @@ export const resolvers = {
         artist = await client.get(args._id)// from cache
       }else{
         const artists = await artistsCollection();
-        artist = await artists.findOne({_id: new ObjectId(args._id)});
+        artist = await artists.findOne({_id: ObjectId(args._id)});
         if (!artist) {
           //can't find the artist
           throw new GraphQLError('Artist Not Found', {
@@ -134,7 +175,9 @@ export const resolvers = {
     getAlbumById: async (_, args) => {
       args._id = checkAndTrimString(args._id, "albumID")
       if (!ObjectId.isValid(args._id)){
-        throw new GraphQLError(`album ID is invalid object ID`)
+        throw new GraphQLError(`album ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
       } 
 
       let exists = await client.exists(args._id); 
@@ -143,7 +186,7 @@ export const resolvers = {
         album = await client.get(args._id)// from cache
       }else{
         const albums = await albumsCollection();
-        album = await albums.findOne({_id: new ObjectId(args._id)});
+        album = await albums.findOne({_id: ObjectId(args._id)});
         if (!album) {
           //can't find the album
           throw new GraphQLError('Album Not Found', {
@@ -159,7 +202,9 @@ export const resolvers = {
     getCompanyById: async (_, args) => {
       args._id = checkAndTrimString(args._id, "companyID")
       if (!ObjectId.isValid(args._id)){
-        throw new GraphQLError(`artist ID is invalid object ID`)
+        throw new GraphQLError(`artist ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
       } 
 
       let exists = await client.exists(args._id); 
@@ -168,7 +213,7 @@ export const resolvers = {
         company = await client.get(args._id)// from cache
       }else{
         const companies = await companiesCollection();
-        company = await companies.findOne({_id: new ObjectId(args._id)});
+        company = await companies.findOne({_id:  ObjectId(args._id)});
         if (!company) {
           //can't find the company
           throw new GraphQLError('Company Not Found', {
@@ -184,7 +229,9 @@ export const resolvers = {
     getSongsByArtistId: async (_, args) => { //get all albums by artist id then return list of all songs
       args._id = checkAndTrimString(args._id)
       if (!ObjectId.isValid(args._id)){
-        throw new GraphQLError(`artistID is invalid object ID`)
+        throw new GraphQLError(`artistID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
       } 
       let exists = await client.exists("songs:"+args.artistId)
       let songs = []
@@ -192,7 +239,7 @@ export const resolvers = {
         songs = await client.get("songs:"+args.artistId)
       }else{
         const albums = await albumsCollection()
-        let artistsAlbums = albums.find({ artistId: new ObjectId(args.artistId) })
+        let artistsAlbums = albums.find({ artistId:  ObjectId(args.artistId) })
         if (!artistsAlbums) {
           //can't find the albums by artist
           throw new GraphQLError('Artist does not have albums', {
@@ -230,12 +277,16 @@ export const resolvers = {
     companyByFoundedYear: async (_, args) => {
       args.min = checkIsNumber(args.min, "min year")
       if(!Number.isInteger(args.min) || args.min <1900){
-        throw new GraphQLError('Min Year must be int greater or equal to 1900')
+        throw new GraphQLError('Min Year must be int greater or equal to 1900', {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
       }
 
       args.max = checkIsNumber(args.max, "max year")
       if(!Number.isInteger(args.max) || args.max <args.min || args.max > 2024){
-        throw new GraphQLError('Max year must be int greater than min year and less than 2025')
+        throw new GraphQLError('Max year must be int greater than min year and less than 2025', {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
       }
       let exists = await client.exists("min"+args.min.toString()+"max"+args.max.toString())
       let companiesList = []
@@ -288,12 +339,12 @@ export const resolvers = {
   Album: {
     artist: async (parentValue) => { //get artist that made album
       const artists = await artistsCollection();
-      const artist = await artists.findOne({_id: parentValue.artistId});
+      const artist = await artists.findOne({_id: parentValue.artist._id});
       return artist;
     },
-    recordcompany: async (parentValue) => { //get record company that distributed album
+    recordCompany: async (parentValue) => { //get record company that distributed album
       const companies = await companiesCollection();
-      const company = await companies.findOne({_id: parentValue.recordCompanyId});
+      const company = await companies.findOne({_id: parentValue.recordCompany._id});
       return company;
     }
   },
@@ -301,7 +352,7 @@ export const resolvers = {
     albums: async (parentValue) => { //get lsit of albums distributed by company
       const albums = await albumsCollection();
       const albumsList = await albums.find({
-        companyId: parentValue._id
+        recordCompany: parentValue
       }).toArray();
       return albumsList;
     },
@@ -319,12 +370,148 @@ export const resolvers = {
   },
   Mutation: {
     addArtist: async (_, args) => {
+      const artists = await artistsCollection();
+      args.name = checkAndTrimString(args.name, "artist name")
+      args.dateFormed = checkAndTrimString(args.dateFormed, "date formed")
+      if(!isValidDate(args.dateFormed)){
+        throw new GraphQLError(
+          `Date is not in valid format`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      if (!Array.isArray(args.members)) {
+        throw new GraphQLError(
+          `Members is not an array`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      args.members.forEach(member => {
+        member = checkAndTrimString(member)
+        if (!/^[a-zA-Z]+$/.test(member)) {
+          throw new GraphQLError(
+            `Member ${member} must only contain letters`,
+            {
+              extensions: {code: 'BAD_USER_INPUT'}
+            })
+        }
+      });
 
+      const newArtist = {
+        _id: new ObjectId(),
+        name: args.name,
+        dateFormed: args.dateFormed,
+        memebers: args.members,
+        albums: [],
+        numOfAlbums: 0
+      };
+     
+      let insertedArtist = await artists.insertOne(newArtist);
+      if (!insertedArtist.acknowledged || !insertedArtist.insertedId) {
+        throw new GraphQLError(`Could not Add Artist`, {
+          extensions: {code: 'INTERNAL_SERVER_ERROR'}
+        });
+      }
+      await client.set(insertedArtist.insertedId, newArtist)
+      await client.del("allArtists")
+      return newArtist;
     },
     editArtist: async (_, args) => {
+      args._id = checkAndTrimString(args._id, "artist ID")
+      if (!ObjectId.isValid(args._id)){
+        throw new GraphQLError(`artist ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      } 
+      if(args.name || args.date_formed || args.members){
+        throw new GraphQLError(
+          `Must update at least 1 field`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      const artists = await artistsCollection();
+      let newArtist = await artists.findOne({_id: ObjectId(args._id)});
+      if (newArtist) {
+        if (args.name) {
+          args.firstName = checkAndTrimString(args.firstName, "artist first name")
+          newArtist.name = args.name;
+        }
+        if (args.date_formed) {
+          args.date_formed = checkAndTrimString(args.date_formed, "date formed")
+          if(!isValidDate(args.date_formed)){
+            throw new GraphQLError(
+              `Date is not in valid format`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              })
+          }
+          newArtist.dateFormed = args.date_formed;
+        }
+        if (args.members){
+          if (!Array.isArray(args.members)) {
+            throw new GraphQLError(
+              `Members is not an array`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              })
+          }
+          args.members.forEach(member => {
+            member = checkAndTrimString(member)
+            if (!/^[a-zA-Z]+$/.test(member)) {
+              throw new GraphQLError(
+                `Member ${member} must only contain letters`,
+                {
+                  extensions: {code: 'BAD_USER_INPUT'}
+                })
+            }
+          })
+          newArtist.members = args.members
+        }
+        await artists.updateOne({_id: args._id}, {$set: newArtist});
+      } else {
+        throw new GraphQLError(
+          `Could not update artist with _id of ${args._id}`,
+          {
+            extensions: {code: 'NOT_FOUND'}
+          }
+        );
+      }
+      await client.set(insertedArtist.insertedId, newArtist)
+      await client.del("allArtists")
+      return newArtist;
 
     },
     removeArtist: async (_, args) => {
+      args._id = checkAndTrimString(args._id, "artist ID")
+      if (!ObjectId.isValid(args._id)){
+        throw new GraphQLError(`artist ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      } 
+      const artists = await artistsCollection();
+      const deletedArtist = await artists.findOneAndDelete({_id: ObjectId(args._id)});
+
+      if (!deletedArtist) {
+        throw new GraphQLError(
+          `Could not delete artist with _id of ${args._id}`,
+          {
+            extensions: {code: 'NOT_FOUND'}
+          }
+        );
+      }
+      //delete albums with that artist
+      const albums = await albumsCollection()
+
+      // const deletedIds = await albums.find({ artistId: artistIdToDelete }).toArray();
+
+      // // Delete albums for the specified artistId
+      // const deleteResult = await albumsCollection.deleteMany({ artistId: artistIdToDelete });
+  
+      await client.del(args._id)
+      await client.del("allArtists")
+      return deletedArtist;
 
     },
     addCompany: async (_, args) => {
