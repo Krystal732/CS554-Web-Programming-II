@@ -1,4 +1,6 @@
 - check error throwing
-- mutation - addArtist - says to create empty array for albums and make sure that numOfAlbums is properly calc but shouldn't it just be 0?
+- mutation - addArtist - numOfAlbums? same with addCompany
 - explain what Date? defined in schema as scalar
+also explain musicGenre enum and how used or imported into resolvers?
 - mutation - editArtist - "should not allow someone to edit albmums array" should we throw error or just ignore it and not update 
+- mutation - del artist - del cache for all albums?

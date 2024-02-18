@@ -2,6 +2,7 @@ import {GraphQLError} from 'graphql';
 import redis from 'redis'
 import {ObjectId} from 'mongodb';
 
+
 const client = redis.createClient();
 client.connect().then(() => {});
 
@@ -12,7 +13,6 @@ import {
   recordcompanies as companiesCollection,
 } from './config/mongoCollections.js';
 
-import {v4 as uuid} from 'uuid'; //for generating _id's
 
 /* parentValue - References the type def that called it
     so for example when we execute numOfEmployees we can reference
@@ -86,7 +86,18 @@ function isValidDate(dateString)
     // Check the range of the day
     return day > 0 && day <= monthLength[month - 1];
 };
-
+const MusicGenre =[
+  "POP",
+  "ROCK",
+  "HIP_HOP",
+  "COUNTRY",
+  "JAZZ",
+  "CLASSICAL",
+  "ELECTRONIC",
+  "R_AND_B",
+  "INDIE",
+  "ALTERNATIVE"
+]
 export const resolvers = {
   Query: {
     artists: async () => { //array of all artists
@@ -275,14 +286,14 @@ export const resolvers = {
       return albumsList
     },
     companyByFoundedYear: async (_, args) => {
-      args.min = checkIsNumber(args.min, "min year")
+      checkIsNumber(args.min, "min year")
       if(!Number.isInteger(args.min) || args.min <1900){
         throw new GraphQLError('Min Year must be int greater or equal to 1900', {
           extensions: {code: 'BAD_USER_INPUT'}
         })
       }
 
-      args.max = checkIsNumber(args.max, "max year")
+      checkIsNumber(args.max, "max year")
       if(!Number.isInteger(args.max) || args.max <args.min || args.max > 2024){
         throw new GraphQLError('Max year must be int greater than min year and less than 2025', {
           extensions: {code: 'BAD_USER_INPUT'}
@@ -424,7 +435,7 @@ export const resolvers = {
           extensions: {code: 'BAD_USER_INPUT'}
         })
       } 
-      if(args.name || args.date_formed || args.members){
+      if(!(args.name || args.date_formed || args.members)){
         throw new GraphQLError(
           `Must update at least 1 field`,
           {
@@ -435,7 +446,7 @@ export const resolvers = {
       let newArtist = await artists.findOne({_id: ObjectId(args._id)});
       if (newArtist) {
         if (args.name) {
-          args.firstName = checkAndTrimString(args.firstName, "artist first name")
+          args.name = checkAndTrimString(args.name, "artist name")
           newArtist.name = args.name;
         }
         if (args.date_formed) {
@@ -469,7 +480,7 @@ export const resolvers = {
           })
           newArtist.members = args.members
         }
-        await artists.updateOne({_id: args._id}, {$set: newArtist});
+        await artists.updateOne({_id: ObjectId(args._id)}, {$set: newArtist});
       } else {
         throw new GraphQLError(
           `Could not update artist with _id of ${args._id}`,
@@ -478,7 +489,7 @@ export const resolvers = {
           }
         );
       }
-      await client.set(insertedArtist.insertedId, newArtist)
+      await client.set(args._id, newArtist)
       await client.del("allArtists")
       return newArtist;
 
@@ -504,33 +515,389 @@ export const resolvers = {
       //delete albums with that artist
       const albums = await albumsCollection()
 
-      // const deletedIds = await albums.find({ artistId: artistIdToDelete }).toArray();
+      const albumIds = deletedArtist.value.albums;
 
-      // // Delete albums for the specified artistId
-      // const deleteResult = await albumsCollection.deleteMany({ artistId: artistIdToDelete });
-  
+      // Delete each album from the albums collection
+      for (const albumId of albumIds) {
+        await albums.deleteOne({_id: albumId})
+        await client.del(albumId.toString());
+      }
+      await client.del('allAlbums')
+
+      //delete artist from cache
       await client.del(args._id)
       await client.del("allArtists")
       return deletedArtist;
 
     },
     addCompany: async (_, args) => {
+      const companies = await companiesCollection();
+      args.name = checkAndTrimString(args.name, "company name")
+      if (!/^[a-zA-Z]+$/.test(args.name)) {
+        throw new GraphQLError(
+          `Name ${args.name} must only contain letters`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      checkIsNumber(args.founded_year, "founded year")
+      if(!Number.isInteger(args.founded_year) || args.founded_year < 1900 || args.founded_year > 2024){
+        throw new GraphQLError('founded year must be int between 1900 and 2025', {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      }
+      args.country = checkAndTrimString(args.country, "company country")
 
+      const newCompany = {
+        _id: new ObjectId(),
+        name: args.name,
+        foundedYear: args.founded_year,
+        country: args.country,
+        albums: []
+      };
+     
+      let insertedCompany = await companies.insertOne(newCompany);
+      if (!insertedCompany.acknowledged || !insertedCompany.insertedId) {
+        throw new GraphQLError(`Could not Add Company`, {
+          extensions: {code: 'INTERNAL_SERVER_ERROR'}
+        });
+      }
+      await client.set(insertedCompany.insertedId, newCompany)
+      await client.del("allCompanies")
+      return newCompany;
     },
     editCompany: async (_, args) => {
-
+      args._id = checkAndTrimString(args._id, "company ID")
+      if (!ObjectId.isValid(args._id)){
+        throw new GraphQLError(`company ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      } 
+      if(!(args.name || args.founded_year || args.country)){
+        throw new GraphQLError(
+          `Must update at least 1 field`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      const companies = await companiesCollection();
+      let newCompany = await companies.findOne({_id: ObjectId(args._id)});
+      if (newCompany) {
+        if (args.name) {
+          args.name = checkAndTrimString(args.name, "comapnies name")
+          if (!/^[a-zA-Z]+$/.test(args.name)) {
+            throw new GraphQLError(
+              `Name ${args.name} must only contain letters`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              })
+          }
+          newCompany.name = args.name;
+        }
+        if (args.founded_year) {
+          checkIsNumber(args.founded_year, "founded year")
+          if(!Number.isInteger(args.founded_year) || args.founded_year < 1900 || args.founded_year > 2024){
+            throw new GraphQLError('founded year must be int between 1900 and 2025', {
+              extensions: {code: 'BAD_USER_INPUT'}
+            })
+          }
+          newCompany.foundedYear = args.founded_year;
+        }
+        if (args.country){
+          args.country = checkAndTrimString(args.country, "company country")
+          newCompany.country = args.country
+        }
+        await companies.updateOne({_id: ObjectId(args._id)}, {$set: newCompany});
+      } else {
+        throw new GraphQLError(
+          `Could not update company with _id of ${args._id}`,
+          {
+            extensions: {code: 'NOT_FOUND'}
+          }
+        );
+      }
+      await client.set(args._id, newCompany)
+      await client.del("allCompanies")
+      return newCompany;
     },
     removeCompany: async (_, args) => {
+      args._id = checkAndTrimString(args._id, "company ID")
+      if (!ObjectId.isValid(args._id)){
+        throw new GraphQLError(`company ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      } 
+      const companies = await companiesCollection();
+      const deletedCompany = await companies.findOneAndDelete({_id: ObjectId(args._id)});
 
+      if (!deletedCompany) {
+        throw new GraphQLError(
+          `Could not delete company with _id of ${args._id}`,
+          {
+            extensions: {code: 'NOT_FOUND'}
+          }
+        );
+      }
+      //delete albums with that company
+      const albums = await albumsCollection()
+
+      const albumIds = deletedCompany.value.albums;
+
+      // Delete each album from the albums collection
+      for (const albumId of albumIds) {
+        await albums.deleteOne({_id: albumId})
+        await client.del(albumId.toString());
+      }
+      await client.del('allAlbums')
+
+      //delete company from cache
+      await client.del(args._id)
+      await client.del("allCompanies")
+      return deletedCompany;
     },
     addAlbum: async (_, args) => {
+      const albums = await albumsCollection();
+      args.title = checkAndTrimString(args.title, "album title")
+      
+      args.releaseDate = checkAndTrimString(args.releaseDate, "date released")
+      if(!isValidDate(args.releaseDate)){
+        throw new GraphQLError(
+          `Date is not in valid format`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      args.genre = checkAndTrimString(args.genre, "album genre")
+      if (!Object.values(MusicGenre).includes(args.genre)) {
+        throw new GraphQLError(
+          `Invalid album music genre`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      if (!Array.isArray(args.songs)) {
+        throw new GraphQLError(
+          `songs is not an array`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      args.songs.forEach(song => {
+        song = checkAndTrimString(song)
+        if (!/^[a-zA-Z]+$/.test(song)) {
+          throw new GraphQLError(
+            `Song ${song} must only contain letters`,
+            {
+              extensions: {code: 'BAD_USER_INPUT'}
+            })
+        }
+      });
+      //make sure they entered a valid artist ID
+      const artists = await artistsCollection()
+      let artist = await artists.findOne({_id: ObjectId(args.artistId)});
+      if (!artist) {
+        throw new GraphQLError(
+          `Could not Find Artist with an ID of ${args.artistId}`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          }
+        );
+      }
+      //make sure they entered a valid company ID
+      const companies = await companiesCollection()
+      let company = await companies.findOne({_id: ObjectId(args.companyId)});
+      if (!company) {
+        throw new GraphQLError(
+          `Could not Find Company with an ID of ${args.companyId}`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          }
+        );
+      }
+
+      const newAlbum = {
+        _id: new ObjectId(),
+        name: args.name,
+        releaseDate: args.releaseDate,
+        genre: args.genre,
+        artistId: ObjectId(args.artistId),
+        recordCompanyId: ObjectId(args.companyId),
+        songs: args.songs
+      };
+     
+      let insertedAlbum = await albums.insertOne(newAlbum);
+      if (!insertedAlbum.acknowledged || !insertedAlbum.insertedId) {
+        throw new GraphQLError(`Could not Add Album`, {
+          extensions: {code: 'INTERNAL_SERVER_ERROR'}
+        });
+      }
+      await client.set(insertedAlbum.insertedId, newAlbum)
+      await client.del("allAlbums")
+      return newAlbum;
 
     },
     editAlbum: async (_, args) => {
-
+      args._id = checkAndTrimString(args._id, "album ID")
+      if (!ObjectId.isValid(args._id)){
+        throw new GraphQLError(`album ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      } 
+      if(!(args.title || args.releaseDate || args.genre || args.songs || args.artistId || args.companyId)){
+        throw new GraphQLError(
+          `Must update at least 1 field`,
+          {
+            extensions: {code: 'BAD_USER_INPUT'}
+          })
+      }
+      const albums = await albumsCollection();
+      let newAlbum = await albums.findOne({_id: ObjectId(args._id)});
+      if (newAlbum) {
+        if (args.title) {
+          args.title = checkAndTrimString(args.title, "album title")
+          newAlbum.title = args.title;
+        }
+        if (args.releaseDate) {
+          args.releaseDate = checkAndTrimString(args.releaseDate, "date released")
+          if(!isValidDate(args.releaseDate)){
+            throw new GraphQLError(
+              `Date is not in valid format`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              })
+          }
+          newAlbum.releaseDate = args.releaseDate;
+        }
+        if (args.genre){
+          args.genre = checkAndTrimString(args.genre, "album genre")
+          if (!Object.values(MusicGenre).includes(args.genre)) {
+            throw new GraphQLError(
+              `Invalid album music genre`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              })
+          }
+          newAlbum.genre = args.genre
+        }
+        if (args.songs){
+          if (!Array.isArray(args.songs)) {
+            throw new GraphQLError(
+              `songs is not an array`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              })
+          }
+          args.songs.forEach(song => {
+            song = checkAndTrimString(song)
+            if (!/^[a-zA-Z]+$/.test(song)) {
+              throw new GraphQLError(
+                `Song ${song} must only contain letters`,
+                {
+                  extensions: {code: 'BAD_USER_INPUT'}
+                })
+            }
+          });
+          newAlbum.songs = args.songs
+        }
+        if (args.artistId){
+          const artists = await artistsCollection()
+          let artist = await artists.findOne({_id: ObjectId(args.artistId)});
+          if (!artist) {
+            throw new GraphQLError(
+              `Could not Find Artist with an ID of ${args.artistId}`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              }
+            );
+          }
+          //pull and push from old and new artists albums
+          await artists.updateOne(
+            {_id: newAlbum.artistId},
+            { $pull: {albums: newAlbum._id} }
+          );
+      
+          await artists.updateOne(
+            {_id: ObjectId(args.artistId)},
+            {$push: {albums: newAlbum._id}}
+          );
+          await client.del(args.artistId)
+          newAlbum.artistId = args.artistId
+        }
+        if (args.companyId){
+          const companies = await companiesCollection()
+          let company = await companies.findOne({_id: ObjectId(args.companyId)});
+          if (!company) {
+            throw new GraphQLError(
+              `Could not Find Company with an ID of ${args.companyId}`,
+              {
+                extensions: {code: 'BAD_USER_INPUT'}
+              }
+            );
+          }
+          //pull and push from old and new companies albums
+          await companies.updateOne(
+            {_id: newAlbum.recordCompanyId},
+            {$pull: {albums: newAlbum._id}}
+          );
+      
+          await artists.updateOne(
+            {_id: ObjectId(args.companyId)},
+            {$push: {albums: newAlbum._id}}
+          );
+          await client.del(args.companyId)
+          newAlbum.recordCompanyId = args.companyId
+        }
+        await albums.updateOne({_id: ObjectId(args._id)}, {$set: newAlbum});
+      } else {
+        throw new GraphQLError(
+          `Could not update album with _id of ${args._id}`,
+          {
+            extensions: {code: 'NOT_FOUND'}
+          }
+        );
+      }
+      await client.set(args._id, newAlbum)
+      await client.del("allAlbums")
+      return newAlbum;
     },
     removeAlbum: async (_, args) => {
+      args._id = checkAndTrimString(args._id, "album ID")
+      if (!ObjectId.isValid(args._id)){
+        throw new GraphQLError(`album ID is invalid object ID`, {
+          extensions: {code: 'BAD_USER_INPUT'}
+        })
+      } 
+      const albums = await albumsCollection();
+      const deletedAlbum = await albums.findOneAndDelete({_id: ObjectId(args._id)});
 
+      if (!deletedAlbum) {
+        throw new GraphQLError(
+          `Could not delete album with _id of ${args._id}`,
+          {
+            extensions: {code: 'NOT_FOUND'}
+          }
+        );
+      }
+      //pull from old artists albums
+      const artists = await artistsCollection()
+      await artists.updateOne(
+        {_id: deletedAlbum.value.artistId},
+        { $pull: {albums: deletedAlbum.value._id} }
+      )
+      await client.del(deletedAlbum.value.artistId.toString())
+
+      //pull from old companies albums
+      const companies = await companiesCollection()
+      await companies.updateOne(
+        {_id: deletedAlbum.value.recordCompanyId},
+        {$pull: {albums: deletedAlbum.value._id}}
+      )
+      await client.del(deletedAlbum.value.recordCompanyId.toString())
+
+      //delete album from cache
+      await client.del(args._id)
+      await client.del('allAlbums')
+      return deletedAlbum;
     }
   }
 };
