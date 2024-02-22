@@ -171,7 +171,7 @@ export const resolvers = {
         artist = JSON.parse(await client.get(args._id))// from cache
       }else{
         const artists = await artistsCollection();
-        artist = await artists.findOne({_id: ObjectId(args._id)});
+        artist = await artists.findOne({_id: new ObjectId(args._id)});
         if (!artist) {
           //can't find the artist
           throw new GraphQLError('Artist Not Found', {
@@ -274,7 +274,7 @@ export const resolvers = {
       }else{
         const albums = await albumsCollection()
         albumsList = albums.find({genre: args.genre})
-        if (!artistsAlbums) {
+        if (!albumsList) {
           //can't find the albums with genre
           throw new GraphQLError('No albums found with that genre', {
             extensions: {code: 'NOT_FOUND'}
@@ -349,7 +349,7 @@ export const resolvers = {
     },
     numOfAlbums: async(parentValue) => {
       const artists = await artistsCollection()
-      let artist = await artists.findOne({_id: parentValue._id})
+      let artist = await artists.findOne({_id: new ObjectId(parentValue._id)})
       if (!artist) {
         //can't find the artist from the id
         throw new GraphQLError('No artist with that Id', {
@@ -362,24 +362,24 @@ export const resolvers = {
   Album: {
     artist: async (parentValue) => { //get artist that made album
       const artists = await artistsCollection();
-      const artist = await artists.findOne({_id: parentValue.artistId});
+      const artist = await artists.findOne({_id: new ObjectId(parentValue.artistId)});
       return artist;
     },
     recordCompany: async (parentValue) => { //get record company that distributed album
       const companies = await companiesCollection();
-      const company = await companies.findOne({_id: parentValue.recordCompany._id})
+      const company = await companies.findOne({_id: new ObjectId( parentValue.recordCompanyId)})
       return company
     }
   },
   RecordCompany: {
     albums: async (parentValue) => { //get lsit of albums distributed by company
       const albums = await albumsCollection();
-      const albumsList = await albums.find({recordCompanyId: parentValue._id}).toArray()
+      const albumsList = await albums.find({recordCompanyId: new ObjectId(parentValue._id)}).toArray()
       return albumsList;
     },
     numOfAlbums: async(parentValue) => {
       const companies = await companiesCollection()
-      let company = await companies.findOne({_id: parentValue._id})
+      let company = await companies.findOne({_id: new ObjectId(parentValue._id)})
       if (!company) {
         //can't find the company from the id
         throw new GraphQLError('No company with that Id', {
@@ -492,6 +492,10 @@ export const resolvers = {
           newArtist.members = args.members
         }
         await artists.updateOne({_id: new ObjectId(args._id)}, {$set: newArtist});
+        await client.set(args._id, JSON.stringify(newArtist))
+        if(await client.exists('allArtists')){
+          await client.del("allArtists")
+        }
       } else {
         throw new GraphQLError(
           `Could not update artist with _id of ${args._id}`,
@@ -500,10 +504,7 @@ export const resolvers = {
           }
         );
       }
-      await client.set(args._id, JSON.stringify(newArtist))
-      if(await client.exists('allArtists')){
-        await client.del("allArtists")
-      }
+      
       return newArtist;
 
     },
@@ -528,20 +529,27 @@ export const resolvers = {
       //delete albums with that artist
       const albums = await albumsCollection()
 
-      const albumIds = deletedArtist.value.albums;
+      const albumIds = deletedArtist.albums;
 
       // Delete each album from the albums collection
-      for (const albumId of albumIds) {
-        await albums.deleteOne({_id: albumId})
-        await client.del(albumId.toString());
+      if(albumIds){
+        if(await client.exists('allAlbums')){
+          await client.del("allAlbums")
+        }
+        for (const albumId of albumIds) {
+          await albums.deleteOne({_id: albumId})
+          await client.del(albumId.toString());
+        }
       }
-      await client.del('allAlbums')
-
+      
       //delete artist from cache
-      await client.del(args._id)
+      if(await client.exists(args._id)){
+        await client.del(args._id)
+      }
       if(await client.exists('allArtists')){
         await client.del("allArtists")
       }
+      
       return deletedArtist;
 
     },
@@ -660,17 +668,25 @@ export const resolvers = {
       //delete albums with that company
       const albums = await albumsCollection()
 
-      const albumIds = deletedCompany.value.albums;
+      const albumIds = deletedCompany.albums;
 
       // Delete each album from the albums collection
-      for (const albumId of albumIds) {
-        await albums.deleteOne({_id: albumId})
-        await client.del(albumId.toString());
+      if (albumIds){
+        for (const albumId of albumIds) {
+          await albums.deleteOne({_id: albumId})
+          if(await client.exists(albumId.toString())){
+            await client.del(albumId.toString())
+          }
+        }
+        if(await client.exists('allAlbums')){
+          await client.del("allAlbums")
+        }
       }
-      await client.del('allAlbums')
 
       //delete company from cache
-      await client.del(args._id)
+      if(await client.exists(args._id)){
+        await client.del(args._id)
+      }
       if(await client.exists('allCompanies')){
         await client.del("allCompanies")
       }
@@ -749,6 +765,30 @@ export const resolvers = {
       if(await client.exists('allAlbums')){
         await client.del("allAlbums")
       }
+
+      //push to albums array of artists and record compnaies
+      await artists.updateOne(
+        {_id:new ObjectId(args.artistId)},
+        {$push: {albums: newAlbum._id}}
+      );
+      if(await client.exists(args.artistId)){
+        await client.del(args.artistId)
+      }
+      await companies.updateOne(
+        {_id:new ObjectId(args.companyId)},
+        {$push: {albums: newAlbum._id}}
+      );
+      if(await client.exists(args.companyId)){
+        await client.del(args.companyId)
+      }
+
+      if(await client.exists('allArtists')){
+        await client.del("allArtists")
+      }
+      if(await client.exists('allCompanies')){
+        await client.del("allCompanies")
+      }
+      
       return newAlbum;
 
     },
@@ -831,12 +871,20 @@ export const resolvers = {
             {_id: newAlbum.artistId},
             { $pull: {albums: newAlbum._id} }
           );
+          if(await client.exists(newAlbum.artistId.toString())){
+            await client.del(newAlbum.artistId.toString())
+          }
       
           await artists.updateOne(
             {_id:new ObjectId(args.artistId)},
             {$push: {albums: newAlbum._id}}
           );
-          await client.del(args.artistId)
+          if(await client.exists(args.artistId)){
+            await client.del(args.artistId)
+          }
+          if(await client.exists('allArtists')){
+            await client.del("allArtists")
+          } 
           newAlbum.artistId = args.artistId
         }
         if (args.companyId){
@@ -855,15 +903,29 @@ export const resolvers = {
             {_id: newAlbum.recordCompanyId},
             {$pull: {albums: newAlbum._id}}
           );
-      
+          if(await client.exists(newAlbum.recordCompanyId.toString())){
+            await client.del(newAlbum.recordCompanyId.toString())
+          }
+
           await artists.updateOne(
             {_id: new ObjectId(args.companyId)},
             {$push: {albums: newAlbum._id}}
           );
-          await client.del(args.companyId)
+          if(await client.exists(args.companyId)){
+            await client.del(args.companyId)
+          }
+
           newAlbum.recordCompanyId = args.companyId
+
+          if(await client.exists('allCompanies')){
+            await client.del("allCompanies")
+          } 
         }
         await albums.updateOne({_id: new ObjectId(args._id)}, {$set: newAlbum});
+        await client.set(args._id, JSON.stringify(newAlbum))
+        if(await client.exists('allAlbums')){
+          await client.del("allAlbums")
+        } 
       } else {
         throw new GraphQLError(
           `Could not update album with _id of ${args._id}`,
@@ -872,10 +934,7 @@ export const resolvers = {
           }
         );
       }
-      await client.set(args._id, JSON.stringify(newAlbum))
-      if(await client.exists('allAlbums')){
-        await client.del("allAlbums")
-      }
+      
       return newAlbum;
     },
     removeAlbum: async (_, args) => {
@@ -887,7 +946,6 @@ export const resolvers = {
       } 
       const albums = await albumsCollection();
       const deletedAlbum = await albums.findOneAndDelete({_id: new ObjectId(args._id)});
-
       if (!deletedAlbum) {
         throw new GraphQLError(
           `Could not delete album with _id of ${args._id}`,
@@ -899,24 +957,37 @@ export const resolvers = {
       //pull from old artists albums
       const artists = await artistsCollection()
       await artists.updateOne(
-        {_id: deletedAlbum.value.artistId},
-        { $pull: {albums: deletedAlbum.value._id} }
+        {_id: deletedAlbum.artistId},
+        { $pull: {albums: deletedAlbum._id} }
       )
-      await client.del(deletedAlbum.value.artistId.toString())
+      if(await client.exists(deletedAlbum.artistId.toString())){
+        await client.del(deletedAlbum.artistId.toString())
+      } 
 
       //pull from old companies albums
       const companies = await companiesCollection()
       await companies.updateOne(
-        {_id: deletedAlbum.value.recordCompanyId},
-        {$pull: {albums: deletedAlbum.value._id}}
+        {_id: deletedAlbum.recordCompanyId},
+        {$pull: {albums: deletedAlbum._id}}
       )
-      await client.del(deletedAlbum.value.recordCompanyId.toString())
+      if(await client.exists(deletedAlbum.recordCompanyId.toString())){
+        await client.del(deletedAlbum.recordCompanyId.toString())
+      } 
 
       //delete album from cache
-      await client.del(args._id)
+      if(await client.exists(args._id)){
+        await client.del(args._id)
+      }
+      if(await client.exists('allArtists')){
+        await client.del("allArtists")
+      }
+      if(await client.exists('allCompanies')){
+        await client.del("allCompanies")
+      }
       if(await client.exists('allAlbums')){
         await client.del("allAlbums")
       }
+
       return deletedAlbum;
     }
   }

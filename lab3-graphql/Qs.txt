@@ -1,10 +1,7 @@
 - check error throwing
 
+- when removing artists should we also remove deleted albums from the record companies
 
+- if we ask for field numOfAlbums when doing delete artists i get error artist not found, this should be ok right?
 
-- ObjectId depricated? but i get error if i remove "new"
-
-spaces allowed for members names!
-stringify before redis caching!
-
-
+65d6c7efc647cc5fc79ed47c
