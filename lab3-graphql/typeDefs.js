@@ -15,7 +15,7 @@ export const typeDefs = `#graphql
   }
 
   type Artist {
-    id: String!
+    _id: String!
     name: String!
     dateFormed: Date!
     members: [String!]!
@@ -24,7 +24,7 @@ export const typeDefs = `#graphql
   }
 
   type Album {
-    id: String!
+    _id: String!
     title: String!
     releaseDate: Date!
     genre: MusicGenre!
@@ -34,7 +34,7 @@ export const typeDefs = `#graphql
   }
 
   type RecordCompany {
-    id: String!
+    _id: String!
     name: String!
     foundedYear: Int!
     country: String
@@ -56,6 +56,7 @@ export const typeDefs = `#graphql
   }
   scalar Date
 
+  # DATE AND MUSIC BACK TO ORIGINAL TYPES!!!
   type Mutation {
     addArtist(name: String!, date_formed: Date!, members: [String!]!) : Artist
     editArtist(_id: String!, name: String, date_formed: Date, members: [String!]) : Artist

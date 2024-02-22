@@ -63,9 +63,8 @@ function isValidDate(dateString)
 {
   // Source:
   //https://stackoverflow.com/questions/6177975/how-to-validate-date-with-format-mm-dd-yyyy-in-javascript
-    // First check for the pattern
-    if(!/^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/\d{4}$/.test(dateString))
-        return false;
+    if(!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateString))
+      return false;
 
     // Parse the date parts to integers
     var parts = dateString.split("/");
@@ -75,7 +74,7 @@ function isValidDate(dateString)
 
     // Check the ranges of month and year
     if(year < 1000 || year > 3000 || month == 0 || month > 12)
-        return false;
+        return false
 
     var monthLength = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
 
@@ -86,25 +85,25 @@ function isValidDate(dateString)
     // Check the range of the day
     return day > 0 && day <= monthLength[month - 1];
 };
-const MusicGenre =[
-  "POP",
-  "ROCK",
-  "HIP_HOP",
-  "COUNTRY",
-  "JAZZ",
-  "CLASSICAL",
-  "ELECTRONIC",
-  "R_AND_B",
-  "INDIE",
-  "ALTERNATIVE"
-]
+// const MusicGenre =[
+//   "POP",
+//   "ROCK",
+//   "HIP_HOP",
+//   "COUNTRY",
+//   "JAZZ",
+//   "CLASSICAL",
+//   "ELECTRONIC",
+//   "R_AND_B",
+//   "INDIE",
+//   "ALTERNATIVE"
+// ]
 export const resolvers = {
   Query: {
     artists: async () => { //array of all artists
       let exists = await client.exists('allArtists'); 
       let allArtists = undefined
       if (exists){
-        allArtists = await client.get('allArtists'); //from cache
+        allArtists = JSON.parse(await client.get('allArtists')); //from cache
       }else{
         const artists = await artistsCollection()
         allArtists = await artists.find().toArray();
@@ -114,16 +113,17 @@ export const resolvers = {
             extensions: {code: 'INTERNAL_SERVER_ERROR'}
           });
         }
-        await client.set('allArtists', allArtists) //add to cache
+        await client.set('allArtists', JSON.stringify(allArtists)) //add to cache
         await client.expire('allArtists', 3600) //expire in 1 hour
       }
       return allArtists
     },
+
     albums: async () => {//array of all albums
       let exists = await client.exists('allAlbums'); 
       let allAlbums = undefined
       if (exists){
-        allAlbums = await client.get('allAlbums'); //from cache
+        allAlbums = JSON.parse (await client.get('allAlbums')); //from cache
       }else{
         const albums = await albumsCollection()
         allAlbums = await albums.find().toArray();
@@ -133,7 +133,7 @@ export const resolvers = {
             extensions: {code: 'INTERNAL_SERVER_ERROR'}
           });
         }
-        await client.set('allAlbums', allAlbums) //add to cache
+        await client.set('allAlbums', JSON.stringify(allAlbums)) //add to cache
         await client.expire('allAlbums', 3600) //expire in 1 hour
       }
       return allAlbums
@@ -142,7 +142,7 @@ export const resolvers = {
       let exists = await client.exists('allCompanies'); 
       let allCompanies = undefined
       if (exists){
-        allCompanies = await client.get('allCompanies'); //from cache
+        allCompanies = JSON.parse(await client.get('allCompanies')); //from cache
       }else{
         const companies = await companiesCollection()
         allCompanies = await companies.find().toArray();
@@ -152,7 +152,7 @@ export const resolvers = {
             extensions: {code: 'INTERNAL_SERVER_ERROR'}
           });
         }
-        await client.set('allCompanies', allCompanies) //add to cache
+        await client.set('allCompanies', JSON.stringify(allCompanies)) //add to cache
         await client.expire('allCompanies', 3600) //expire in 1 hour
       }
       return allCompanies
@@ -168,7 +168,7 @@ export const resolvers = {
       let exists = await client.exists(args._id); 
       let artist = undefined
       if (exists){
-        artist = await client.get(args._id)// from cache
+        artist = JSON.parse(await client.get(args._id))// from cache
       }else{
         const artists = await artistsCollection();
         artist = await artists.findOne({_id: ObjectId(args._id)});
@@ -178,7 +178,7 @@ export const resolvers = {
             extensions: {code: 'NOT_FOUND'}
           });
         }
-        await client.set(args._id, artist) //add to cache
+        await client.set(args._id, JSON.stringify(artist)) //add to cache
 
       }
       return artist;
@@ -194,17 +194,17 @@ export const resolvers = {
       let exists = await client.exists(args._id); 
       let album = undefined
       if (exists){
-        album = await client.get(args._id)// from cache
+        album = JSON.parse(await client.get(args._id))// from cache
       }else{
         const albums = await albumsCollection();
-        album = await albums.findOne({_id: ObjectId(args._id)});
+        album = await albums.findOne({_id: new ObjectId(args._id)});
         if (!album) {
           //can't find the album
           throw new GraphQLError('Album Not Found', {
             extensions: {code: 'NOT_FOUND'}
           });
         }
-        await client.set(args._id, album) //add to cache
+        await client.set(args._id, JSON.stringify(album)) //add to cache
 
       }
       return album;
@@ -221,17 +221,17 @@ export const resolvers = {
       let exists = await client.exists(args._id); 
       let company = undefined
       if (exists){
-        company = await client.get(args._id)// from cache
+        company = JSON.parse(await client.get(args._id))// from cache
       }else{
         const companies = await companiesCollection();
-        company = await companies.findOne({_id:  ObjectId(args._id)});
+        company = await companies.findOne({_id: new ObjectId(args._id)});
         if (!company) {
           //can't find the company
           throw new GraphQLError('Company Not Found', {
             extensions: {code: 'NOT_FOUND'}
           });
         }
-        await client.set(args._id, company) //add to cache
+        await client.set(args._id, JSON.stringify(company)) //add to cache
 
       }
       return company;
@@ -247,18 +247,18 @@ export const resolvers = {
       let exists = await client.exists("songs:"+args.artistId)
       let songs = []
       if (exists){
-        songs = await client.get("songs:"+args.artistId)
+        songs = JSON.parse(await client.get("songs:"+args.artistId))
       }else{
         const albums = await albumsCollection()
-        let artistsAlbums = albums.find({ artistId:  ObjectId(args.artistId) })
+        let artistsAlbums = albums.find({ artistId: new ObjectId(args.artistId) })
         if (!artistsAlbums) {
           //can't find the albums by artist
           throw new GraphQLError('Artist does not have albums', {
             extensions: {code: 'NOT_FOUND'}
           });
         }
-        artistsAlbums.forEach(album => {songs = songs.concat(album.songs)})
-        await client.lPush("songs:"+args.artistId, songs) //save to cache
+        songs = artistsAlbums.forEach(album => {songs = songs.concat(album.songs)})
+        await client.lPush("songs:"+args.artistId, JSON.stringify(songs)) //save to cache
         await client.expire("songs:"+args.artistId, 3600) //expire in 1 hour
 
       }
@@ -266,11 +266,11 @@ export const resolvers = {
     },
     albumsByGenre: async (_, args) => {//check albums and get ones w mathcing genre
       args.genre = checkAndTrimString(args.genre, "genre")
-      args.genre = args.genre.toUpperCase()
+      // args.genre = args.genre.toUpperCase()
       let exists = await client.exists(args.genre)
       let albumsList = []
       if (exists){
-        albumsList = await client.get(args.genre)
+        albumsList = JSON.parse(await client.get(args.genre))
       }else{
         const albums = await albumsCollection()
         albumsList = albums.find({genre: args.genre})
@@ -280,7 +280,7 @@ export const resolvers = {
             extensions: {code: 'NOT_FOUND'}
           });
         }
-        await client.lPush(args.genre, albumsList) //save to cache
+        await client.lPush(args.genre, JSON.stringify(albumsList)) //save to cache
         await client.expire(args.genre, 3600) //expire in 1 hour
       }
       return albumsList
@@ -302,23 +302,35 @@ export const resolvers = {
       let exists = await client.exists("min"+args.min.toString()+"max"+args.max.toString())
       let companiesList = []
       if (exists){
-        companiesList = await client.get("min"+args.min.toString()+"max"+args.max.toString())
+        companiesList = JSON.parse(await client.get("min"+args.min.toString()+"max"+args.max.toString()))
       }else{
         const companies = await companiesCollection()
-        companiesList = companies.find({foundedYear: {$gte: args.min, $lte: args.max}})
+        companiesList = companies.find({foundedYear: {$gte: args.min, $lte: args.max}}).toArray()
         if (!companiesList) {
           //can't find the companies between those years
           throw new GraphQLError('No comapnies found with that year range', {
             extensions: {code: 'NOT_FOUND'}
           });
         }
-        await client.lPush("min"+args.min.toString()+"max"+args.max.toString(), companiesList)
+        await client.lPush("min"+args.min.toString()+"max"+args.max.toString(), JSON.stringify(companiesList))
         await client.expire("min"+args.min.toString()+"max"+args.max.toString(), 3600)
       }
       return companiesList
     },
     searchArtistByArtistName: async (_, args) => {
-
+      args.searchTerm = checkAndTrimString(args.searchTerm).toLowerCase()
+      let exists = await client.exists(args.searchTerm)
+      let matchingArtists = []
+      if(exists){
+        matchingArtists = JSON.parse(await client.get(args.searchTerm))
+      }else{
+        const artists = await artistsCollection()
+        const regex = new RegExp(args.searchTerm, 'i') //case insensitve regex 
+        matchingArtists = await artists.find({name: {$regex: regex}}).toArray()
+        await client.set(args.searchTerm, JSON.stringify(matchingArtists))
+        await client.expire(args.searchTerm, 3600)
+      }
+      return matchingArtists
     },
   },
   Artist: {
@@ -350,21 +362,19 @@ export const resolvers = {
   Album: {
     artist: async (parentValue) => { //get artist that made album
       const artists = await artistsCollection();
-      const artist = await artists.findOne({_id: parentValue.artist._id});
+      const artist = await artists.findOne({_id: parentValue.artistId});
       return artist;
     },
     recordCompany: async (parentValue) => { //get record company that distributed album
       const companies = await companiesCollection();
-      const company = await companies.findOne({_id: parentValue.recordCompany._id});
-      return company;
+      const company = await companies.findOne({_id: parentValue.recordCompany._id})
+      return company
     }
   },
   RecordCompany: {
     albums: async (parentValue) => { //get lsit of albums distributed by company
       const albums = await albumsCollection();
-      const albumsList = await albums.find({
-        recordCompany: parentValue
-      }).toArray();
+      const albumsList = await albums.find({recordCompanyId: parentValue._id}).toArray()
       return albumsList;
     },
     numOfAlbums: async(parentValue) => {
@@ -383,8 +393,8 @@ export const resolvers = {
     addArtist: async (_, args) => {
       const artists = await artistsCollection();
       args.name = checkAndTrimString(args.name, "artist name")
-      args.dateFormed = checkAndTrimString(args.dateFormed, "date formed")
-      if(!isValidDate(args.dateFormed)){
+      args.date_formed = checkAndTrimString(args.date_formed, "date formed")
+      if(!isValidDate(args.date_formed)){
         throw new GraphQLError(
           `Date is not in valid format`,
           {
@@ -400,7 +410,7 @@ export const resolvers = {
       }
       args.members.forEach(member => {
         member = checkAndTrimString(member)
-        if (!/^[a-zA-Z]+$/.test(member)) {
+        if (!/^[a-zA-Z\s]+$/.test(member)) {
           throw new GraphQLError(
             `Member ${member} must only contain letters`,
             {
@@ -412,10 +422,9 @@ export const resolvers = {
       const newArtist = {
         _id: new ObjectId(),
         name: args.name,
-        dateFormed: args.dateFormed,
-        memebers: args.members,
-        albums: [],
-        numOfAlbums: 0
+        dateFormed: args.date_formed,
+        members: args.members,
+        albums: []
       };
      
       let insertedArtist = await artists.insertOne(newArtist);
@@ -424,8 +433,10 @@ export const resolvers = {
           extensions: {code: 'INTERNAL_SERVER_ERROR'}
         });
       }
-      await client.set(insertedArtist.insertedId, newArtist)
-      await client.del("allArtists")
+      await client.set(insertedArtist.insertedId.toString(), JSON.stringify(newArtist))
+      if(await client.exists('allArtists')){
+        await client.del("allArtists")
+      }
       return newArtist;
     },
     editArtist: async (_, args) => {
@@ -443,7 +454,7 @@ export const resolvers = {
           })
       }
       const artists = await artistsCollection();
-      let newArtist = await artists.findOne({_id: ObjectId(args._id)});
+      let newArtist = await artists.findOne({_id: new ObjectId(args._id)});
       if (newArtist) {
         if (args.name) {
           args.name = checkAndTrimString(args.name, "artist name")
@@ -470,7 +481,7 @@ export const resolvers = {
           }
           args.members.forEach(member => {
             member = checkAndTrimString(member)
-            if (!/^[a-zA-Z]+$/.test(member)) {
+            if (!/^[a-zA-Z\s]+$/.test(member)) {
               throw new GraphQLError(
                 `Member ${member} must only contain letters`,
                 {
@@ -480,7 +491,7 @@ export const resolvers = {
           })
           newArtist.members = args.members
         }
-        await artists.updateOne({_id: ObjectId(args._id)}, {$set: newArtist});
+        await artists.updateOne({_id: new ObjectId(args._id)}, {$set: newArtist});
       } else {
         throw new GraphQLError(
           `Could not update artist with _id of ${args._id}`,
@@ -489,8 +500,10 @@ export const resolvers = {
           }
         );
       }
-      await client.set(args._id, newArtist)
-      await client.del("allArtists")
+      await client.set(args._id, JSON.stringify(newArtist))
+      if(await client.exists('allArtists')){
+        await client.del("allArtists")
+      }
       return newArtist;
 
     },
@@ -502,7 +515,7 @@ export const resolvers = {
         })
       } 
       const artists = await artistsCollection();
-      const deletedArtist = await artists.findOneAndDelete({_id: ObjectId(args._id)});
+      const deletedArtist = await artists.findOneAndDelete({_id: new ObjectId(args._id)});
 
       if (!deletedArtist) {
         throw new GraphQLError(
@@ -526,14 +539,16 @@ export const resolvers = {
 
       //delete artist from cache
       await client.del(args._id)
-      await client.del("allArtists")
+      if(await client.exists('allArtists')){
+        await client.del("allArtists")
+      }
       return deletedArtist;
 
     },
     addCompany: async (_, args) => {
       const companies = await companiesCollection();
       args.name = checkAndTrimString(args.name, "company name")
-      if (!/^[a-zA-Z]+$/.test(args.name)) {
+      if (!/^[a-zA-Z\s]+$/.test(args.name)) {
         throw new GraphQLError(
           `Name ${args.name} must only contain letters`,
           {
@@ -562,8 +577,10 @@ export const resolvers = {
           extensions: {code: 'INTERNAL_SERVER_ERROR'}
         });
       }
-      await client.set(insertedCompany.insertedId, newCompany)
-      await client.del("allCompanies")
+      await client.set(insertedCompany.insertedId.toString(), JSON.stringify(newCompany))
+      if(await client.exists('allCompanies')){
+        await client.del("allCompanies")
+      }
       return newCompany;
     },
     editCompany: async (_, args) => {
@@ -581,11 +598,11 @@ export const resolvers = {
           })
       }
       const companies = await companiesCollection();
-      let newCompany = await companies.findOne({_id: ObjectId(args._id)});
+      let newCompany = await companies.findOne({_id: new ObjectId(args._id)});
       if (newCompany) {
         if (args.name) {
           args.name = checkAndTrimString(args.name, "comapnies name")
-          if (!/^[a-zA-Z]+$/.test(args.name)) {
+          if (!/^[a-zA-Z\s]+$/.test(args.name)) {
             throw new GraphQLError(
               `Name ${args.name} must only contain letters`,
               {
@@ -607,7 +624,7 @@ export const resolvers = {
           args.country = checkAndTrimString(args.country, "company country")
           newCompany.country = args.country
         }
-        await companies.updateOne({_id: ObjectId(args._id)}, {$set: newCompany});
+        await companies.updateOne({_id: new ObjectId(args._id)}, {$set: newCompany});
       } else {
         throw new GraphQLError(
           `Could not update company with _id of ${args._id}`,
@@ -616,8 +633,10 @@ export const resolvers = {
           }
         );
       }
-      await client.set(args._id, newCompany)
-      await client.del("allCompanies")
+      await client.set(args._id, JSON.stringify(newCompany))
+      if(await client.exists('allCompanies')){
+        await client.del("allCompanies")
+      }
       return newCompany;
     },
     removeCompany: async (_, args) => {
@@ -628,7 +647,7 @@ export const resolvers = {
         })
       } 
       const companies = await companiesCollection();
-      const deletedCompany = await companies.findOneAndDelete({_id: ObjectId(args._id)});
+      const deletedCompany = await companies.findOneAndDelete({_id:new ObjectId(args._id)});
 
       if (!deletedCompany) {
         throw new GraphQLError(
@@ -652,7 +671,9 @@ export const resolvers = {
 
       //delete company from cache
       await client.del(args._id)
-      await client.del("allCompanies")
+      if(await client.exists('allCompanies')){
+        await client.del("allCompanies")
+      }
       return deletedCompany;
     },
     addAlbum: async (_, args) => {
@@ -668,13 +689,6 @@ export const resolvers = {
           })
       }
       args.genre = checkAndTrimString(args.genre, "album genre")
-      if (!Object.values(MusicGenre).includes(args.genre)) {
-        throw new GraphQLError(
-          `Invalid album music genre`,
-          {
-            extensions: {code: 'BAD_USER_INPUT'}
-          })
-      }
       if (!Array.isArray(args.songs)) {
         throw new GraphQLError(
           `songs is not an array`,
@@ -684,7 +698,7 @@ export const resolvers = {
       }
       args.songs.forEach(song => {
         song = checkAndTrimString(song)
-        if (!/^[a-zA-Z]+$/.test(song)) {
+        if (!/^[a-zA-Z\s]+$/.test(song)) {
           throw new GraphQLError(
             `Song ${song} must only contain letters`,
             {
@@ -694,7 +708,7 @@ export const resolvers = {
       });
       //make sure they entered a valid artist ID
       const artists = await artistsCollection()
-      let artist = await artists.findOne({_id: ObjectId(args.artistId)});
+      let artist = await artists.findOne({_id: new ObjectId(args.artistId)});
       if (!artist) {
         throw new GraphQLError(
           `Could not Find Artist with an ID of ${args.artistId}`,
@@ -705,7 +719,7 @@ export const resolvers = {
       }
       //make sure they entered a valid company ID
       const companies = await companiesCollection()
-      let company = await companies.findOne({_id: ObjectId(args.companyId)});
+      let company = await companies.findOne({_id: new ObjectId(args.companyId)});
       if (!company) {
         throw new GraphQLError(
           `Could not Find Company with an ID of ${args.companyId}`,
@@ -717,11 +731,11 @@ export const resolvers = {
 
       const newAlbum = {
         _id: new ObjectId(),
-        name: args.name,
+        title: args.title,
         releaseDate: args.releaseDate,
         genre: args.genre,
-        artistId: ObjectId(args.artistId),
-        recordCompanyId: ObjectId(args.companyId),
+        artistId: new ObjectId(args.artistId),
+        recordCompanyId: new ObjectId(args.companyId),
         songs: args.songs
       };
      
@@ -731,8 +745,10 @@ export const resolvers = {
           extensions: {code: 'INTERNAL_SERVER_ERROR'}
         });
       }
-      await client.set(insertedAlbum.insertedId, newAlbum)
-      await client.del("allAlbums")
+      await client.set(insertedAlbum.insertedId.toString(), JSON.stringify(newAlbum))
+      if(await client.exists('allAlbums')){
+        await client.del("allAlbums")
+      }
       return newAlbum;
 
     },
@@ -751,7 +767,7 @@ export const resolvers = {
           })
       }
       const albums = await albumsCollection();
-      let newAlbum = await albums.findOne({_id: ObjectId(args._id)});
+      let newAlbum = await albums.findOne({_id: new ObjectId(args._id)});
       if (newAlbum) {
         if (args.title) {
           args.title = checkAndTrimString(args.title, "album title")
@@ -770,13 +786,13 @@ export const resolvers = {
         }
         if (args.genre){
           args.genre = checkAndTrimString(args.genre, "album genre")
-          if (!Object.values(MusicGenre).includes(args.genre)) {
-            throw new GraphQLError(
-              `Invalid album music genre`,
-              {
-                extensions: {code: 'BAD_USER_INPUT'}
-              })
-          }
+          // if (!Object.values(MusicGenre).includes(args.genre)) {
+          //   throw new GraphQLError(
+          //     `Invalid album music genre`,
+          //     {
+          //       extensions: {code: 'BAD_USER_INPUT'}
+          //     })
+          // }
           newAlbum.genre = args.genre
         }
         if (args.songs){
@@ -789,7 +805,7 @@ export const resolvers = {
           }
           args.songs.forEach(song => {
             song = checkAndTrimString(song)
-            if (!/^[a-zA-Z]+$/.test(song)) {
+            if (!/^[a-zA-Z\s]+$/.test(song)) {
               throw new GraphQLError(
                 `Song ${song} must only contain letters`,
                 {
@@ -801,7 +817,7 @@ export const resolvers = {
         }
         if (args.artistId){
           const artists = await artistsCollection()
-          let artist = await artists.findOne({_id: ObjectId(args.artistId)});
+          let artist = await artists.findOne({_id: new ObjectId(args.artistId)});
           if (!artist) {
             throw new GraphQLError(
               `Could not Find Artist with an ID of ${args.artistId}`,
@@ -817,7 +833,7 @@ export const resolvers = {
           );
       
           await artists.updateOne(
-            {_id: ObjectId(args.artistId)},
+            {_id:new ObjectId(args.artistId)},
             {$push: {albums: newAlbum._id}}
           );
           await client.del(args.artistId)
@@ -825,7 +841,7 @@ export const resolvers = {
         }
         if (args.companyId){
           const companies = await companiesCollection()
-          let company = await companies.findOne({_id: ObjectId(args.companyId)});
+          let company = await companies.findOne({_id: new ObjectId(args.companyId)});
           if (!company) {
             throw new GraphQLError(
               `Could not Find Company with an ID of ${args.companyId}`,
@@ -841,13 +857,13 @@ export const resolvers = {
           );
       
           await artists.updateOne(
-            {_id: ObjectId(args.companyId)},
+            {_id: new ObjectId(args.companyId)},
             {$push: {albums: newAlbum._id}}
           );
           await client.del(args.companyId)
           newAlbum.recordCompanyId = args.companyId
         }
-        await albums.updateOne({_id: ObjectId(args._id)}, {$set: newAlbum});
+        await albums.updateOne({_id: new ObjectId(args._id)}, {$set: newAlbum});
       } else {
         throw new GraphQLError(
           `Could not update album with _id of ${args._id}`,
@@ -856,8 +872,10 @@ export const resolvers = {
           }
         );
       }
-      await client.set(args._id, newAlbum)
-      await client.del("allAlbums")
+      await client.set(args._id, JSON.stringify(newAlbum))
+      if(await client.exists('allAlbums')){
+        await client.del("allAlbums")
+      }
       return newAlbum;
     },
     removeAlbum: async (_, args) => {
@@ -868,7 +886,7 @@ export const resolvers = {
         })
       } 
       const albums = await albumsCollection();
-      const deletedAlbum = await albums.findOneAndDelete({_id: ObjectId(args._id)});
+      const deletedAlbum = await albums.findOneAndDelete({_id: new ObjectId(args._id)});
 
       if (!deletedAlbum) {
         throw new GraphQLError(
@@ -896,7 +914,9 @@ export const resolvers = {
 
       //delete album from cache
       await client.del(args._id)
-      await client.del('allAlbums')
+      if(await client.exists('allAlbums')){
+        await client.del("allAlbums")
+      }
       return deletedAlbum;
     }
   }
