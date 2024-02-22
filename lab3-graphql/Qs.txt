@@ -1,7 +1,12 @@
-- check error throwing
-
-- when removing artists should we also remove deleted albums from the record companies
-
 - if we ask for field numOfAlbums when doing delete artists i get error artist not found, this should be ok right?
 
-65d6c7efc647cc5fc79ed47c
+art
+65d7990533683bcf8a6dc265
+
+comp
+65d79b3033683bcf8a6dc266
+
+alb
+65d79dfc33683bcf8a6dc267
+
+line 838 to test
