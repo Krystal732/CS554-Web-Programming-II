@@ -8,7 +8,7 @@ const dbConnection = async () => {
   if (!_connection) {
     _connection = await MongoClient.connect(mongoConfig.serverUrl);
     _db = _connection.db(mongoConfig.database);
-    await dropCollections();
+    // await dropCollections();
     
   }
 
@@ -21,8 +21,8 @@ const closeConnection = async () => {
 // Function to drop collections during connection setup
 const dropCollections = async () => {
   // List of collections to drop
-  // const collectionsToDrop = ['artists', 'albums', 'recordcompanies'];
-  const collectionsToDrop = ['albums'];
+  const collectionsToDrop = ['artists', 'albums', 'recordcompanies', 'songs'];
+  // const collectionsToDrop = ['albums', 'songs'];
 
   // Drop each collection
   for (const collectionName of collectionsToDrop) {

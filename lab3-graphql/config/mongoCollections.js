@@ -19,3 +19,5 @@ const getCollectionFn = (collection) => {
 export const artists = getCollectionFn('artists');
 export const albums = getCollectionFn('albums');
 export const recordcompanies = getCollectionFn('recordcompanies');
+export const songs = getCollectionFn('songs');
+

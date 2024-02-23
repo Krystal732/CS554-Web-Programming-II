@@ -1,12 +1,19 @@
 - if we ask for field numOfAlbums when doing delete artists i get error artist not found, this should be ok right?
 
 art
-65d7990533683bcf8a6dc265
+65d7fc190b5fde709ee81040
+65d7fc8b0b5fde709ee81044
 
 comp
-65d79b3033683bcf8a6dc266
+65d7fc250b5fde709ee81041
+65d7fc9c0b5fde709ee81045
 
 alb
-65d79dfc33683bcf8a6dc267
+65d7fc430b5fde709ee81042
+65d7fcba0b5fde709ee81046
 
-line 838 to test
+song
+65d7fc430b5fde709ee81042
+65d7fccb0b5fde709ee81047
+
+clear cache for other queries too
