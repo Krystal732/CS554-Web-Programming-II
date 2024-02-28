@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import TodoList from './components/TodoList'
 import CompletedTodos from './components/CompletedTodos'
+import AddTodo from './components/AddTodo'
 import './App.css'
 
 function App() {
@@ -79,7 +80,7 @@ function App() {
     }
   ]
   const [todoList, setTodoList] = useState(todos);
-
+  let count = 11
 
   const deleteTodo = (id) => {
     setTodoList((prevState) => prevState.filter(item => item.id !== id))
@@ -94,9 +95,21 @@ function App() {
     )
   }
 
+  const addTodo = (todo) => {
+    todo.id = count
+    setTodoList((prevState) => [...prevState, todo])
+    count ++
+  }
+
   
   return (
     <>
+    <h1>
+      ADD TODO ITEM
+    </h1>
+      <AddTodo
+        addTodo = {addTodo}
+      />
     <h1>
       TODO LIST
     </h1>
