@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
+import TodoList from './components/TodoList'
+import CompletedTodos from './components/CompletedTodos'
 import './App.css'
 
 function App() {
-  const [TodoList, CompletedTodos] = useState([])
-
-  let todos = [
+    let todos = [
     {
       id: 1,
       title: 'Pay cable bill',
@@ -78,21 +78,41 @@ function App() {
       completed: false
     }
   ]
+  const [todoList, setTodoList] = useState(todos);
 
 
   const deleteTodo = (id) => {
-
+    setTodoList((prevState) => prevState.filter(item => item.id !== id))
   }
 
   const toggleCompleted = (todo) => {
-
+    //for each item if id = todo, updated completed, else leave as is
+    setTodoList(prevState => 
+      prevState.map(item =>
+        item.id === todo.id ? { ...item, completed: !item.completed }: item
+      )
+    )
   }
 
   
   return (
     <>
+    <h1>
+      TODO LIST
+    </h1>
+      <TodoList
+        items = {todoList}
+        deleteTodo = {deleteTodo}
+        toggleCompleted = {toggleCompleted}
+      />
 
-
+    <h1>
+      COMPLETED TODO LIST
+    </h1>
+      <CompletedTodos
+        items = {todoList}
+        toggleCompleted = {toggleCompleted}
+      />
     </>
   )
 }

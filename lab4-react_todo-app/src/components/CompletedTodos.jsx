@@ -1,15 +1,21 @@
-function CompletedTodos({item, toggleCompleted}) {
-    const buttonClick = () => {
-        toggleCompleted(item);
-    };
+function CompletedTodos(props) {
+    const completed = props.items.filter(item => item.completed);
+    const btnClick = (item) => {
+        props.toggleCompleted(item);
+      };
+    
     return (
       <div>
-        <h1>{item.title}</h1>
-        <p>{item.description}</p>
-        <p>Due Date:{item.due}</p>
-        <p>Completed:{item.completed}</p>
-        <br />
-        <button onClick={buttonClick}>Mark Incomplete</button>
+        {completed.map((item) => (
+            <div key={item.id}>
+                <h1>{item.title}</h1>
+                <p>{item.description}</p>
+                <p>Due Date:{item.due}</p>
+                <p>Completed:{item.completed? 'Yes' : 'No'}</p> 
+                <br />
+                <button onClick={() => btnClick(item)}>Mark Incomplete</button>
+            </div>
+        ))}
       </div>
     );
   }
