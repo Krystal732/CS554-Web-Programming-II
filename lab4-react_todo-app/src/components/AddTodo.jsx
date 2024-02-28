@@ -37,15 +37,26 @@ function AddTodo(props) {
 
         if(!due)return 
 
-        let date = new Date(due)
-        if (isNaN(date.getTime()) || date < new Date()) {
+        const [year, month, day] = due.split('-');
+
+        // Construct the date object manually
+        const date = new Date(year, month - 1, day);
+
+        let today = new Date()
+
+        //so the times are not compared
+        //https://stackoverflow.com/questions/2698725/comparing-date-part-only-without-comparing-time-in-javascript
+        today.setHours(0, 0, 0, 0)
+        date.setHours(0, 0, 0, 0)
+
+        if (isNaN(date.getTime()) || date < today) {
             alert(`Due date,  ${due}, must be a valid date after today`)
             return
         }
 
-        let month = date.getMonth() + 1
-        let day = date.getDate()
-        let year = date.getFullYear()
+        
+
+    
 
         due = month + '/' + day + '/' + year;
 
@@ -93,6 +104,8 @@ function AddTodo(props) {
             id='due'
             type='date'
             placeholder='Due'
+            min= {new Date().toISOString().split('T')[0]}
+            //https://stackoverflow.com/questions/47066555/remove-time-after-converting-date-toisostring
           />
         </label>
 

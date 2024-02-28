@@ -98,7 +98,7 @@ function App() {
   const addTodo = (todo) => {
     todo.id = count
     setTodoList((prevState) => [...prevState, todo])
-    count ++
+    count = count ++
   }
 
   
