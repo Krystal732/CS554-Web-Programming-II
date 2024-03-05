@@ -18,11 +18,9 @@ const Launch = () => {
 
 
   useEffect(() => {
-    console.log('LAUNCH useEffect fired');
     async function fetchData() {
       try {
         const {data: launch} = await axios.get(
-
           `https://api.spacexdata.com/v4/launches/${id}`
         );
         setLaunchData(launch);
@@ -167,7 +165,8 @@ const Launch = () => {
               <p>
                 <dt className='title'>Launchpad:</dt>
                 {launchData && launchData.launchpad ? (
-                  <dd>{launchData.launchpad}</dd>
+                  // <dd>{launchData.launchpad}</dd>
+                  <Link to={`/launchpads/${launchData.launchpad}`}>{launchData.launchpad}</Link>
                 ) : (
                   <dd>N/A</dd>
                 )}
@@ -175,7 +174,9 @@ const Launch = () => {
               <p>
                 <dt className='title'>Rocket:</dt>
                 {launchData && launchData.rocket ? (
-                  <dd>{launchData.rocket}</dd>
+                  // <dd>{launchData.rocket}</dd>
+                  <Link to={`/rockets/${launchData.rocket}`}>{launchData.rocket}</Link>
+
                 ) : (
                   <dd>N/A</dd>
                 )}
@@ -185,7 +186,10 @@ const Launch = () => {
                 {launchData && launchData.payloads && launchData.payloads.length >= 1 ? (
                   <ol>
                     {launchData.payloads.map((payload) => (
-                      <li key={payload}>{payload}</li>
+                      // <li key={payload}>{payload}</li>
+                      <li key={payload}>
+                        <Link to={`/payloads/${payload}`}>{payload}</Link>
+                      </li>
                     ))}
                   </ol>
                 ) : (
@@ -197,7 +201,10 @@ const Launch = () => {
                 {launchData && launchData.ships && launchData.ships.length >= 1 ? (
                   <ol>
                     {launchData.ships.map((ship) => (
-                      <li key={ship}>{ship}</li>
+                      // <li key={ship}>{ship}</li>
+                      <li key={ship}>{ship}
+                        <Link to={`/ships/${ship}`}>{ship}</Link>
+                      </li>
                     ))}
                   </ol>
                 ) : (
@@ -209,7 +216,10 @@ const Launch = () => {
                 {launchData && launchData.cores && launchData.cores.length >= 1 ? (
                   <ol>
                     {launchData.cores.map((core) => (
-                      <li key={core.core}>{core.core}</li>
+                      // <li key={core.core}>{core.core}</li>
+                      <li key={core.core}>
+                        <Link to={`/cores/${core.core}`}>{core.core}</Link>
+                      </li>
                     ))}
                   </ol>
                 ) : (
