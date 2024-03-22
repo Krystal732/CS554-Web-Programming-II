@@ -22,7 +22,22 @@ const Launch = () => {
       try {
         const {data: launch} = await axios.get(
           `https://api.spacexdata.com/v4/launches/${id}`
+
+          // `https://api.spacexdata.com/v4/launches/${id}/query`, {
+          //   query: {}, 
+          //   options: {
+          //     populate: [
+          //       {
+          //         "path": "payloads",
+          //         "select":{
+          //           "name": 1
+          //         }
+          //       }
+          //     ]
+          //   }
+          // }
         );
+        // console.log(launch)
         setLaunchData(launch);
         setLoading(false);
       } catch (e) {
@@ -163,7 +178,7 @@ const Launch = () => {
                 )}
               </p>
               <p>
-                <dt className='title'>Launchpad:</dt>
+                <dt className='title'>Launchpad: </dt>
                 {launchData && launchData.launchpad ? (
                   // <dd>{launchData.launchpad}</dd>
                   <Link to={`/launchpads/${launchData.launchpad}`}>{launchData.launchpad}</Link>
@@ -202,7 +217,7 @@ const Launch = () => {
                   <ol>
                     {launchData.ships.map((ship) => (
                       // <li key={ship}>{ship}</li>
-                      <li key={ship}>{ship}
+                      <li key={ship}>
                         <Link to={`/ships/${ship}`}>{ship}</Link>
                       </li>
                     ))}
