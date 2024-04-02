@@ -14,6 +14,8 @@ import '../App.css';
 const Payload = () => {
   const [payloadData, setPayloadData] = useState(undefined);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(undefined);
+
   let {id} = useParams();
 
 
@@ -27,7 +29,11 @@ const Payload = () => {
         setPayloadData(payload);
         setLoading(false);
       } catch (e) {
-        console.log(e);
+        if (e.response.status === 404) {
+          setError(<div>404 Error - No Payload with that ID</div>)
+        } else {
+          console.log(e); 
+        }
       }
     }
     fetchData();
@@ -35,11 +41,15 @@ const Payload = () => {
 
  
   if (loading) {
-    return (
-      <div>
-        <h2>Loading....</h2>
-      </div>
-    );
+    if(error){
+      return(error)
+    }else{
+      return (
+        <div>
+          <h2>Loading....</h2>
+        </div>
+      );
+    }
   } else {
     return (
       <Card

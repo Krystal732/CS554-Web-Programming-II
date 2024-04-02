@@ -15,6 +15,8 @@ import '../App.css';
 const Rockets = () => {
   const [rocketsData, setRocketsData] = useState(undefined);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(undefined);
+
   let {id} = useParams();
 
 
@@ -28,7 +30,11 @@ const Rockets = () => {
         setRocketsData(rocket);
         setLoading(false);
       } catch (e) {
-        console.log(e);
+        if (e.response.status === 404) {
+          setError(<div>404 Error - No Rocket with that ID</div>)
+        } else {
+          console.log(e); 
+        }
       }
     }
     fetchData();
@@ -36,11 +42,15 @@ const Rockets = () => {
 
  
   if (loading) {
-    return (
-      <div>
-        <h2>Loading....</h2>
-      </div>
-    );
+    if(error){
+      return(error)
+    }else{
+      return (
+        <div>
+          <h2>Loading....</h2>
+        </div>
+      );
+    }
   } else {
     return (
       <Card

@@ -72,7 +72,22 @@ function ListCard({object, type}) {
       title= {object.name}
     />
   }
-
+  if(type === 'ships'){ 
+    pic = 
+    <CardMedia
+      sx={{
+        height: '100%',
+        width: '100%'
+      }}
+      component='img'
+      image={
+        object.image
+          ? object.image
+          : noImage
+      }
+      title= {object.name}
+    />
+  }
   if(type === 'launches' || type === 'payloads' || type === 'rockets' || type === 'ships' || type === 'launchpads'){
     name = 
     <Typography

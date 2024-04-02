@@ -15,6 +15,8 @@ import '../App.css';
 const Ship = () => {
   const [shipData, setShipData] = useState(undefined);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(undefined);
+
   let {id} = useParams();
 
 
@@ -28,19 +30,26 @@ const Ship = () => {
         setShipData(ship);
         setLoading(false);
       } catch (e) {
-        console.log(e);
-      }
+        if (e.response.status === 404) {
+          setError(<div>404 Error - No Ship with that ID</div>)
+        } else {
+          console.log(e); 
+        }      }
     }
     fetchData();
   }, [id]);
 
  
   if (loading) {
-    return (
-      <div>
-        <h2>Loading....</h2>
-      </div>
-    );
+    if(error){
+      return(error)
+    }else{
+      return (
+        <div>
+          <h2>Loading....</h2>
+        </div>
+      );
+    }
   } else {
     return (
       <Card

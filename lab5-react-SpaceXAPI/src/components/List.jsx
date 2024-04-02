@@ -12,6 +12,10 @@ const List = (props) => {
   const [prev, setPrev] = useState(false); 
   const [next, setNext] = useState(false); 
 
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchData, setSearchData] = useState(undefined)
+  let form  = undefined
+
   let cardsData = undefined
   
   useEffect(() => { 
@@ -35,12 +39,87 @@ const List = (props) => {
     fetchData();
   }, [id]);
 
+
+
+  
+  useEffect(() => {
+    // console.log('search useEffect fired');
+    async function fetchData() {
+      try {
+        let name = 'name'
+        if(props.type === 'cores'){
+          name = 'serial'
+        }
+        // console.log(`in fetch searchTerm: ${searchTerm}`);
+        const { data } = await axios.post(`https://api.spacexdata.com/v4/${props.type}/query`, {
+          query: {
+            [name]: {
+              "$regex": searchTerm,
+              "$options": "i" 
+            }
+          }, 
+          options: {
+            limit: 10,
+            page: id
+          }
+        });
+        setSearchData(data.docs);
+        setPrev(data.hasPrevPage)
+        setNext(data.hasNextPage)
+        setLoading(false);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    if (searchTerm) {
+      // console.log('searchTerm is set');
+      fetchData();
+    }
+  }, [searchTerm, id]);
+
+  
+
+  if (searchTerm) {
+    // console.log('search card data')
+    cardsData =
+    searchData &&
+    searchData.map((launch) => {
+      return <ListCard object={launch} key={launch.id} type = {props.type}/>;
+    });
+  } else {
+    // console.log('all card datA')
     cardsData =
     launchesData &&
     launchesData.map((launch) => {
       return <ListCard object={launch} key={launch.id} type = {props.type}/>;
-    }); 
+    })}; 
 
+if(props.type === 'launches' || props.type == 'payloads' || props.type === 'cores'){
+  form =
+  <div>
+      <form
+          method='POST '
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
+          name='formName'
+          className='center'
+        >
+          <label>
+            <span>Search {props.type} </span>
+            <input
+              autoComplete='off'
+              type='text'
+              name='searchTerm'
+              onChange={(e) => setSearchTerm(e.target.value)}
+              />
+          </label>
+        </form>
+        <br />
+        <br />
+  </div>
+  
+}
 
   if (loading) {
     return (
@@ -51,6 +130,7 @@ const List = (props) => {
   } else {
     return (
       <div>
+        {form}
         <Grid
           container
           spacing={2}

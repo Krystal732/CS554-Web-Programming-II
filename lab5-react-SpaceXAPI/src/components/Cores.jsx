@@ -14,6 +14,7 @@ import '../App.css';
 const Cores = () => {
   const [coreData, setcoreData] = useState(undefined);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(undefined);
   let {id} = useParams();
 
 
@@ -27,7 +28,11 @@ const Cores = () => {
         setcoreData(core);
         setLoading(false);
       } catch (e) {
-        console.log(e);
+        if (e.response.status === 404) {
+          setError(<div>404 Error - No Core with that ID</div>)
+        } else {
+          console.log(e); 
+        }
       }
     }
     fetchData();
@@ -35,11 +40,15 @@ const Cores = () => {
 
  
   if (loading) {
-    return (
-      <div>
-        <h2>Loading....</h2>
-      </div>
-    );
+    if(error){
+      return(error)
+    }else{
+      return (
+        <div>
+          <h2>Loading....</h2>
+        </div>
+      );
+    }
   } else {
     return (
       <Card

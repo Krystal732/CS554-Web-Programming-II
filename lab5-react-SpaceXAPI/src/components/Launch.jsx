@@ -14,6 +14,7 @@ import '../App.css';
 const Launch = () => {
   const [launchData, setLaunchData] = useState(undefined);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(undefined);
   let {id} = useParams();
 
 
@@ -22,26 +23,15 @@ const Launch = () => {
       try {
         const {data: launch} = await axios.get(
           `https://api.spacexdata.com/v4/launches/${id}`
-
-          // `https://api.spacexdata.com/v4/launches/${id}/query`, {
-          //   query: {}, 
-          //   options: {
-          //     populate: [
-          //       {
-          //         "path": "payloads",
-          //         "select":{
-          //           "name": 1
-          //         }
-          //       }
-          //     ]
-          //   }
-          // }
         );
-        // console.log(launch)
         setLaunchData(launch);
         setLoading(false);
       } catch (e) {
-        console.log(e);
+        if (e.response.status === 404) {
+          setError(<div>404 Error - No Launch with that ID</div>)
+        } else {
+          console.log(e); 
+        }
       }
     }
     fetchData();
@@ -49,11 +39,16 @@ const Launch = () => {
 
  
   if (loading) {
-    return (
-      <div>
-        <h2>Loading....</h2>
-      </div>
-    );
+    if(error){
+      return(error)
+    }else{
+      return (
+        <div>
+          <h2>Loading....</h2>
+        </div>
+      );
+    }
+    
   } else {
     return (
       <Card
