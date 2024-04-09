@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// import App from './components/App';
+import App from './components/App.jsx';
 import './index.css';
 import {BrowserRouter} from 'react-router-dom';
 import {
@@ -16,10 +16,11 @@ const client = new ApolloClient({
     uri: 'http://localhost:4000'
   })
 });
+console.log("main")
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ApolloProvider client={client}>
     <BrowserRouter>
-      {/* <App /> */}
+      <App />
     </BrowserRouter>
   </ApolloProvider>
 );

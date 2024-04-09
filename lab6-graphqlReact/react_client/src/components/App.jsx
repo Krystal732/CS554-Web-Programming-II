@@ -2,10 +2,11 @@ import React from 'react';
 import './App.css';
 import {NavLink, Route, Routes} from 'react-router-dom';
 import Home from './Home';
-import Employees from './Employees';
-import Employers from './Employers';
+import ArtistList from './ArtistList';
+// import Employers from './Employers';
 
 function App() {
+  console.log("app")
   return (
     <div>
       <header className='App-header'>
@@ -16,8 +17,8 @@ function App() {
       </header>
       <Routes>
         <Route path='/' element={<Home />} />
-        <Route path='/artists' element={<ArtistsList />} />
-        <Route path='/artists/:id' element={<Artist />} />
+        <Route path='/artists' element={<ArtistList />} />
+        {/* <Route path='/artists/:id' element={<Artist />} /> */}
       </Routes>
     </div>
   );
