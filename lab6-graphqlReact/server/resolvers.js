@@ -132,6 +132,8 @@ export const resolvers = {
       }else{
         const artists = await artistsCollection()
         allArtists = await artists.find().toArray();
+        console.log("resolves", allArtists)
+
         if (!allArtists) {
           //Could not get list
           throw new GraphQLError(`Internal Server Error`, {
@@ -616,6 +618,7 @@ export const resolvers = {
       return newArtist;
     },
     editArtist: async (_, args) => {
+      // console.log(args)
       args._id = checkAndTrimString(args._id, "artist ID")
       if (!ObjectId.isValid(args._id)){
         throw new GraphQLError(`artist ID is invalid object ID`, {
@@ -678,6 +681,7 @@ export const resolvers = {
 
     },
     removeArtist: async (_, args) => {
+      // console.log("args", args)
       args._id = checkAndTrimString(args._id, "artist ID")
       if (!ObjectId.isValid(args._id)){
         throw new GraphQLError(`artist ID is invalid object ID`, {
@@ -686,7 +690,7 @@ export const resolvers = {
       } 
       const artists = await artistsCollection();
       const deletedArtist = await artists.findOneAndDelete({_id: new ObjectId(args._id)});
-
+      // console.log(deletedArtist)
       if (!deletedArtist) {
         throw new GraphQLError(
           `Could not delete artist with _id of ${args._id}`,

@@ -1,17 +1,19 @@
 import React, {useState} from 'react';
 import './App.css';
-import {useQuery} from '@apollo/client';
+import {useQuery, useMutation} from '@apollo/client';
 import queries from '../queries';
-import Add from './Add';
-import RemoveArtistModal from './RemoveArtistModal';
-import EditArtistModal from './EditArtistModal';
+import AddModal from './AddModal';
+// import RemoveModal from './RemoveModal';
+import EditModal from './EditModal';
 
 const ArtistList = () => {
-    const [showAddForm, setShowAddForm] = useState(false);
+    // const [showAddForm, setShowAddForm] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [showRemoveModal, setShowRemoveModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
     const [editArtist, setEditArtist] = useState(null);
-    const [removeArtist, setRemoveArtist] = useState(null);
+    const [removeArtist] = useMutation(queries.REMOVE_ARTIST);
+
+    // const [addArtist, setAddArtist] = useState(null);
 
     const {loading, error, data} = useQuery(queries.GET_ARTISTS, {
         fetchPolicy: 'cache-and-network'
@@ -21,29 +23,40 @@ const ArtistList = () => {
         setEditArtist(artist);
     };
 
-    const handleOpenRemoveModal = (artist) => {
-        setShowRemoveModal(true);
-        setRemoveArtist(artist);
-    };
-    const closeAddFormState = () => {
-        setShowAddForm(false);
-    };
-
+    // const handleOpenAddModal = () => {
+    //     setShowAddModal(true);
+    //     // setAddArtist();
+    // };
+    const remove = async (id) => {
+        console.log(id)
+        try{
+            await removeArtist({
+              variables: {
+                id: id
+              }
+            });
+        }catch(e){
+            alert(e)
+        }
+    }
     const handleCloseModals = () => {
         setShowEditModal(false);
-        setShowRemoveModal(false);
+        setShowAddModal(false);
     };
+
 
     if (data) {
         const {artists} = data;
         return (
         <div>
-            <button className='button' onClick={() => setShowAddForm(!showAddForm)}>
-            Create Artist
-            </button>
-            {showAddForm && (
-            <Add type='artist' closeAddFormState={closeAddFormState} />
-            )}
+            <button
+                className='button'
+                onClick={() => {
+                    setShowAddModal(true)
+                }}
+                >
+                Add Artist
+                </button>
             <br />
             <br />
 
@@ -54,9 +67,9 @@ const ArtistList = () => {
                     <h5 className='card-title'>
                     {artist.name} 
                     </h5>
-                    Members: {artist.members}
+                    Members: {artist.members.join(', ')}
                     <br />
-                    Number of Albums: {artist.numofAlbums}
+                    Number of Albums: {artist.albums.length}
                     <br />
                     <button
                     className='button'
@@ -69,7 +82,7 @@ const ArtistList = () => {
                     <button
                     className='button'
                     onClick={() => {
-                        handleOpenRemoveModal(artist);
+                        remove(artist._id);
                     }}
                     >
                     Remove
@@ -80,18 +93,17 @@ const ArtistList = () => {
             );
             })}
             {showEditModal && (
-            <EditArtistModal
+            <EditModal
                 isOpen={showEditModal}
                 artist={editArtist}
                 handleClose={handleCloseModals}
             />
             )}
 
-            {showRemoveModal && (
-            <RemoveArtistModal
-                isOpen={showRemoveModal}
+            {showAddModal && (
+            <AddModal
+                isOpen={showAddModal}
                 handleClose={handleCloseModals}
-                removeArtist={removeArtist}
             />
             )}
         </div>

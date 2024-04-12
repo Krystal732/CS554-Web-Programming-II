@@ -1,0 +1,4 @@
+
+diff between using add employee form and edit modal?
+
+for edit, how to keep some fields optional to update?

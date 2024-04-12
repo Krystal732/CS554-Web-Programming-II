@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import TodoList from './components/TodoList'
 import CompletedTodos from './components/CompletedTodos'
 import AddTodo from './components/AddTodo'
@@ -90,7 +88,7 @@ function App() {
     //for each item if id = todo, updated completed, else leave as is
     setTodoList(prevState => 
       prevState.map(item =>
-        item.id === todo.id ? { ...item, completed: !item.completed }: item
+        item.id === todo.id ? {...item, completed: !item.completed}: item
       )
     )
   }

@@ -3,6 +3,7 @@ import {gql} from '@apollo/client'
 const GET_ARTISTS = gql`
     query{
         artists {
+            _id          
             name
             members
             dateFormed
@@ -36,8 +37,17 @@ const ADD_ARTIST = gql`
   }
 `
 const EDIT_ARTIST = gql `
-    mutation changeArtist($id: String!) {
-        editArtist(_id: $id) {
+    mutation editArtist(
+      $id: String!
+      $name: String
+      $dateFormed: Date
+      $members: [String!]
+    ) {
+        editArtist(
+          _id: $id
+          name: $name
+          date_formed: $dateFormed
+          members: $members) {
             name
             members
             dateFormed
