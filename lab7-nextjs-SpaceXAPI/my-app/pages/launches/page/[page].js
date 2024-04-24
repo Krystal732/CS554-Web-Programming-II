@@ -19,7 +19,7 @@ export default function List(props){
                     <h2>Flight Number: {launch.flight_number}</h2>
                     <br/>
                     {launch.links.flickr.original[0] ? (
-                    <img src={launch.links.flickr.original[0]} alt={launch.name} />
+                    <img src={launch.links.flickr.original[0]} alt={launch.name} style={{maxWidth: '250px'}}/>
                     ):(
                     <img src={launch.links.patch.small} alt={launch.name} />)}
                     </Link>
