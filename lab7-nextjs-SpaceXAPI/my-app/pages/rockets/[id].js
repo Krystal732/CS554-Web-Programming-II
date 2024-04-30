@@ -1,5 +1,5 @@
 import axios from 'axios';
-import Link from 'next/link';
+import Head from 'next/head'
 
 
 
@@ -12,12 +12,12 @@ export default function List({rocket}){
     // );
     return(
         <div>
+          <Head><title>{rocket.name}</title></Head>
             <h1>{rocket.name}</h1>
             <br/>
-            {rocket.flickr_images[0] ? (
+            {rocket.flickr_images[0] && (
             <img src={rocket.flickr_images[0]} alt={rocket.name} style={{maxWidth: '250px'}}/>
-            ):(
-            <img src={noImage} alt="No Image Available" />)}
+            )}
             <br/>
             <p>
             Active?: {rocket.active ? "Yes" : "No"}

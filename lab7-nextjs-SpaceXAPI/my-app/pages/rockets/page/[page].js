@@ -1,22 +1,24 @@
 import axios from 'axios';
 import Link from 'next/link';
-import noImage from '../../../public/download.jpeg';
+import Head from 'next/head'
 
 
 export default function List(props){
 
     return(
         <div>
+          <Head>
+            <title>Rockets</title>
+          </Head>
             <ul>
                 {props.data.map((rocket) => (
                 <li key={rocket.id}>
                     <Link href={`/rockets/${rocket.id}`}>
                     <h1>{rocket.name}</h1>
                     <br/>
-                    {rocket.flickr_images[0] ? (
+                    {rocket.flickr_images[0] && (
                     <img src={rocket.flickr_images[0]} alt={rocket.name} style={{maxWidth: '250px'}}/>
-                    ):(
-                    <img src={noImage} alt="No Image Available" />)}
+                    )}
                     </Link>
                     <br/>
                     <br/>

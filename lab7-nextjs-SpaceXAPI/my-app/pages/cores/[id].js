@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Link from 'next/link';
-
+import Head from 'next/head'
 
 
 export default function List({core}){
@@ -12,6 +12,9 @@ export default function List({core}){
     // );
     return(
         <div>
+          <Head>
+            <title>{core.serial}</title>
+          </Head>
             <h1>{core.serial}</h1>
             <br/>
             

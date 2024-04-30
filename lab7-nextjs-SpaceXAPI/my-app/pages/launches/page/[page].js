@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Link from 'next/link';
+import Head from 'next/head'
 
 
 export default function List(props){
@@ -11,6 +12,9 @@ export default function List(props){
     // );
     return(
         <div>
+            <Head>
+                <title>Launches</title>
+            </Head>
             <ul>
                 {props.data.map((launch) => (
                 <li key={launch.id}>

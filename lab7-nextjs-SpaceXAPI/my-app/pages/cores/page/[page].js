@@ -1,5 +1,7 @@
 import axios from 'axios';
 import Link from 'next/link';
+import Head from 'next/head'
+
 
 
 export default function List(props){
@@ -11,6 +13,9 @@ export default function List(props){
     // );
     return(
         <div>
+          <Head>
+            <title>Cores</title>
+          </Head>
             <ul>
                 {props.data.map((core) => (
                 <li key={core.id}>

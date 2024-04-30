@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Link from 'next/link';
-import noImage from '../../public/download.jpeg';
+import Head from 'next/head'
 
 
 
@@ -13,12 +13,12 @@ export default function List({ship}){
     // );
     return(
         <div>
+          <Head><title>{ship.name}</title></Head>
             <h1>{ship.name}</h1>
             <br/>
-            {ship.image ? (
-            <img src={ship.image} alt={ship.name} style={{maxWidth: '250px'}} />
-            ):(
-            <img src={noImage} alt="No Image Available" />)}
+            {ship.image && (
+              <img src={ship.image} alt={ship.name} style={{maxWidth: '250px'}}/>
+            )}
             <br/>
             <p>
             Legacy ID: {ship.legacy_id ? ship.legacy_id : 'N/A'}

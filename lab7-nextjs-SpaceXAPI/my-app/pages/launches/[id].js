@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Link from 'next/link';
+import Head from 'next/head'
 
 
 
@@ -12,6 +13,7 @@ export default function List({launch}){
     // );
     return(
         <div>
+            <Head><title>{launch.name}</title></Head>
             <h1>{launch.name}</h1>
             <h2>Flight Number: {launch.flight_number}</h2>
             <br/>

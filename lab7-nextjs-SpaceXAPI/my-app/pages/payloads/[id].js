@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Link from 'next/link';
-
+import Head from 'next/head'
 
 
 export default function List({payload}){
@@ -12,6 +12,9 @@ export default function List({payload}){
     // );
     return(
         <div>
+            <Head>
+                <title>{payload.name}</title>
+            </Head>
             <h1>{payload.name}</h1>
             <br/>
             
